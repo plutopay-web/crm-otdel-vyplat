@@ -30,7 +30,7 @@
 .sc h3{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}.sc h3 .d{width:4px;height:14px;background:linear-gradient(180deg,var(--accent),#A78BFA);border-radius:2px}
 .tw{overflow-x:auto}table.t{width:100%;border-collapse:collapse;font-size:12px}table.t th{padding:8px 10px;text-align:left;font-size:9px;text-transform:uppercase;color:var(--text2);font-weight:700;border-bottom:1px solid var(--border);white-space:nowrap}table.t td{padding:8px 10px;border-bottom:1px solid rgba(47,50,65,.5)}table.t tr:hover td{background:rgba(232,86,109,.03)}
 .fr{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}.fg{display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px}.fg label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-weight:700}.fg input,.fg select{background:rgba(40,42,54,.9);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;outline:none;font-family:inherit}.fg input:focus,.fg select:focus{border-color:var(--accent)}
-.btn{border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:600;cursor:pointer}.btn-a{background:var(--accent);color:#fff}.btn-r{background:var(--red);color:#fff}.btn-g{background:transparent;border:1px solid var(--border);color:var(--text2);padding:6px 12px;font-size:11px;border-radius:6px;cursor:pointer}
+.btn{border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:600;cursor:pointer}.btn-a{background:var(--accent);color:#fff}.btn-r{background:var(--red);color:#fff}.btn-g{background:transparent;border:1px solid var(--border);color:var(--text2);padding:6px 12px;font-size:11px;border-radius:6px;cursor:pointer}.pi{background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;text-align:center;outline:none}.pi:focus{border-color:var(--accent)}
 .bd{display:inline-flex;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}.bg{background:rgba(74,222,128,.12);color:var(--green)}.br{background:rgba(232,86,109,.12);color:var(--red)}.by{background:rgba(251,191,36,.12);color:var(--yellow)}.ba{background:rgba(232,86,109,.1);color:var(--accent)}
 .pg{display:flex;align-items:center;gap:8px}.pt{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}.pf{height:100%;border-radius:3px}
 .em{text-align:center;color:var(--text2);padding:40px 20px;font-size:13px}
@@ -88,7 +88,9 @@ var google={script:{run:{
     updateUserRole:function(em,ro){gasCall('updateuserrole',{email:em,role:ro},this._s,this._f)},
     updateUserField:function(em,fi,va){gasCall('updateuserfield',{email:em,field:fi,value:va},this._s,this._f)},
     removeUser:function(em){gasCall('removeuser',{email:em},this._s,this._f)},
-    getViolationTypes:function(){gasCall('getviolationtypes',{},this._s,this._f)}
+    getViolationTypes:function(){gasCall('getviolationtypes',{},this._s,this._f)},
+    getPayrollData:function(m){gasCall('getpayroll',{month:m},this._s,this._f)},
+    savePayrollEntry:function(m,n,d,ex,r){gasCall('savepayroll',{month:m,nick:n,days:d,extra:ex,rate:r},this._s,this._f)}
   };return o},
   withFailureHandler:function(fn){return this.withSuccessHandler(function(){}).withFailureHandler(fn)}
 }}};
@@ -373,7 +375,56 @@ function rBonuses(el){var ce=U.level>=2,h='';if(ce)h+='<div class="sc"><h3><span
 function sB(){var m=document.getElementById('bM').value,r=document.getElementById('bR').value,d=document.getElementById('bD').value,a=document.getElementById('bA').value,c=document.getElementById('bC').value;if(!m||!r||!a){ts('Заполни поля',1);return}google.script.run.withSuccessHandler(function(){ts('Бонус!');go('bonuses')}).withFailureHandler(function(e){ts(e.message,1)}).addBonus(d,m,r,c,parseFloat(a))}
 function dB(id){if(confirm('Удалить?'))google.script.run.withSuccessHandler(function(){ts('Удалено');go('bonuses')}).deleteBonus(id)}
 function rReport(el){if(!R.length){el.innerHTML='<div class="em">Нет данных</div>';return}var md=bmd(R),to=md.reduce(function(a,d){return a+d.o},0);var h='<div class="sc"><h3><span class="d"></span>Отчёт</h3><div class="tw"><table class="t"><tr><th>#</th><th>Менеджер</th><th>Карт</th><th>Объём</th><th>Ср.</th><th>Блок</th><th>%</th><th>Доля</th></tr>';md.forEach(function(d,i){var sh=to?d.o/to*100:0;h+='<tr><td>'+(i+1)+'</td><td><b>'+d.m+'</b></td><td>'+d.c+'</td><td style="color:var(--green)">'+f(d.o)+'</td><td>'+f(d.a)+'</td><td style="color:var(--red)">'+f(d.bs)+'</td><td><span class="bd '+(d.bp<5?'bg':d.bp<10?'by':'br')+'">'+fp(d.bp)+'</span></td><td>'+sh.toFixed(1)+'%</td></tr>'});el.innerHTML=h+'</table></div></div>'}
-function rPayroll(el){el.innerHTML='<div class="sc"><h3><span class="d"></span>Ведомость</h3><div class="em">🚧 В разработке</div></div>'}
+function _curMonth(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1<10?'0':'')+(d.getMonth()+1)}
+function _monthLabel(m){var p=m.split('-');var mn=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];return mn[parseInt(p[1])-1]+' '+p[0]}
+var _payMonth=_curMonth();
+function rPayroll(el){
+var ce=U.level>=2;
+var h='<div class="sc"><h3><span class="d"></span>Ведомость</h3>';
+h+='<div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;flex-wrap:wrap">';
+h+='<button class="btn btn-s" onclick="_payMonth=_prevMonth(_payMonth);go(\'payroll\')" style="padding:6px 12px">◀</button>';
+h+='<span style="font-size:15px;font-weight:600" id="payMonthLabel">'+_monthLabel(_payMonth)+'</span>';
+h+='<button class="btn btn-s" onclick="_payMonth=_nextMonth(_payMonth);go(\'payroll\')" style="padding:6px 12px">▶</button>';
+h+='</div>';
+h+='<div id="payBody"><div class="em">⏳ Загрузка...</div></div></div>';
+el.innerHTML=h;
+google.script.run.withSuccessHandler(function(rows){
+  var pb=document.getElementById('payBody');
+  if(!rows||!rows.length){pb.innerHTML='<div class="em">Нет менеджеров</div>';return}
+  var gt=0;
+  var t='<div class="tw"><table class="t"><tr><th>Менеджер</th><th>Роль</th><th>Ставка/ч</th><th>Баз.ч</th><th>Дней</th><th>Доп.ч</th><th>Всего ч</th><th style="color:var(--green)">Бонусы</th><th style="color:var(--red)">Штрафы</th><th style="font-weight:700">Итого</th>'+(ce?'<th></th>':'')+'</tr>';
+  rows.forEach(function(r,i){
+    gt+=r.total;
+    t+='<tr>';
+    t+='<td><b>'+r.nick+'</b><div style="font-size:10px;color:var(--text2)">'+r.name+'</div></td>';
+    t+='<td><span class="bd ba" style="font-size:10px">'+r.roleLabel+'</span></td>';
+    t+='<td>'+(ce?'<input type="number" class="pi" id="pr_'+i+'" value="'+r.rate+'" style="width:60px">':'$'+r.rate)+'</td>';
+    t+='<td>'+r.baseHours+'</td>';
+    t+='<td>'+(ce?'<input type="number" class="pi" id="pd_'+i+'" value="'+r.days+'" style="width:50px" min="0" max="31">':r.days)+'</td>';
+    t+='<td>'+(ce?'<input type="number" class="pi" id="pe_'+i+'" value="'+r.extra+'" style="width:50px" min="0">':r.extra)+'</td>';
+    t+='<td style="font-weight:600">'+r.totalHours+'</td>';
+    t+='<td style="color:var(--green)">'+f(r.bonuses)+'</td>';
+    t+='<td style="color:var(--red)">'+f(r.fines)+'</td>';
+    var c=r.total>=0?'var(--green)':'var(--red)';
+    t+='<td style="font-weight:700;color:'+c+'">$'+f(r.total)+'</td>';
+    if(ce)t+='<td><button class="btn-g" onclick="savePay('+i+',\''+r.nick+'\')" style="color:var(--green);font-size:11px">💾</button></td>';
+    t+='</tr>';
+  });
+  t+='<tr style="border-top:2px solid var(--border)"><td colspan="9" style="text-align:right;font-weight:700">ИТОГО:</td><td style="font-weight:700;color:'+(gt>=0?'var(--green)':'var(--red)')+'">$'+f(gt)+'</td>'+(ce?'<td></td>':'')+'</tr>';
+  pb.innerHTML=t+'</table></div>';
+  window._payRows=rows;
+}).withFailureHandler(function(e){
+  document.getElementById('payBody').innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>';
+}).getPayrollData(_payMonth);
+}
+function _prevMonth(m){var p=m.split('-');var y=parseInt(p[0]),mn=parseInt(p[1])-1;if(mn<1){mn=12;y--}return y+'-'+(mn<10?'0':'')+mn}
+function _nextMonth(m){var p=m.split('-');var y=parseInt(p[0]),mn=parseInt(p[1])+1;if(mn>12){mn=1;y++}return y+'-'+(mn<10?'0':'')+mn}
+function savePay(i,nick){
+  var rate=parseFloat(document.getElementById('pr_'+i).value)||0;
+  var days=parseFloat(document.getElementById('pd_'+i).value)||0;
+  var extra=parseFloat(document.getElementById('pe_'+i).value)||0;
+  google.script.run.withSuccessHandler(function(){ts('Сохранено');go('payroll')}).withFailureHandler(function(e){ts(e.message,1)}).savePayrollEntry(_payMonth,nick,days,extra,rate);
+}
 function rProfile(el){var ini=U.name.split(' ').map(function(w){return w[0]}).join('').toUpperCase().slice(0,2);el.innerHTML='<div class="sc"><div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap"><div class="av" style="width:80px;height:80px;font-size:32px">'+(U.avatar?'<img src="'+U.avatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">':ini)+'</div><div style="flex:1;min-width:240px"><h2 style="font-size:20px;margin-bottom:4px">'+U.name+'</h2><div style="color:var(--text2);font-size:13px;margin-bottom:4px">'+U.email+'</div><span class="bd ba">'+U.roleLabel+'</span>'+(U.nick?'<div style="color:var(--text2);font-size:12px;margin-top:8px">Ник: <b style="color:var(--text)">'+U.nick+'</b></div>':'')+'</div></div></div><div class="sc" style="margin-top:20px"><h3><span class="d"></span>Настройки</h3><div class="fr"><div class="fg"><label>Ник</label><input type="text" id="pN" value="'+(U.nick||'')+'"></div><div class="fg"><label>Аватар URL</label><input type="text" id="pA" value="'+(U.avatar||'')+'"></div></div><button class="btn btn-a" onclick="sP()">💾 Сохранить</button></div>'}
 function sP(){var n=document.getElementById('pN').value.trim(),a=document.getElementById('pA').value.trim();google.script.run.withSuccessHandler(function(){U.nick=n;U.avatar=a;ts('Сохранено');go('profile')}).withFailureHandler(function(e){ts(e.message,1)}).saveProfile(n,a)}
 var RL=[{id:'admin',l:'Админ'},{id:'manager_lead',l:'Руководитель'},{id:'teamlead',l:'Тимлид'},{id:'support',l:'Саппорт'},{id:'employee',l:'Менеджер'}];
