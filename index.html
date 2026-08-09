@@ -108,6 +108,8 @@ function td(){var d=new Date(),p=function(n){return n<10?'0'+n:''+n};return d.ge
 function dl(){var f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;if(f&&t)return f.split('-').reverse().join('.')+' — '+t.split('-').reverse().join('.');return'Все'}
 function parseD(s){if(!s)return null;var p=s.split('.');return new Date(+p[2],+p[1]-1,+p[0])}
 var _olSet={};
+function _matchMgr(nick,mgrName){if(!nick||!mgrName)return false;var a=nick.toLowerCase().replace(/[@_\s]/g,''),b=mgrName.toLowerCase().replace(/[@_\s]/g,'');return a===b||b.indexOf(a)===0||a.indexOf(b)===0}
+function _findMyMgr(md){var n=U.nick||U.name;for(var i=0;i<md.length;i++){if(_matchMgr(n,md[i].m))return i}return-1}
 function _onlineSet(){return _olSet}
 function _fetchOnline(){gasCall('getonline',{},function(list){_olSet={};if(list)list.forEach(function(n){_olSet[n]=1})})}
 function _startHeartbeat(){gasCall('heartbeat',{});_fetchOnline();setInterval(function(){gasCall('heartbeat',{})},120000);setInterval(_fetchOnline,60000)}
@@ -401,8 +403,7 @@ function rDash(el){if(!R.length){el.innerHTML='<div class="em">Нет данны
 // ═══ ЛИДЕРБОРД ═══
 function _greet(){var h=new Date().getHours();return h<12?'Доброе утро':h<18?'Добрый день':'Добрый вечер'}
 function _myCard(md,bkM){
-var myNick=U.nick||U.name;var pos=-1,me=null;
-for(var i=0;i<md.length;i++){if(md[i].m===myNick){pos=i;me=md[i];break}}
+var myNick=U.nick||U.name;var pos=_findMyMgr(md),me=pos>=0?md[pos]:null;
 if(!me)return'';
 var above=pos>0?md[pos-1]:null,below=pos<md.length-1?md[pos+1]:null;
 var h='<div style="background:linear-gradient(135deg,rgba(129,140,248,.12),rgba(74,222,128,.08));border:1.5px solid var(--accent);border-radius:16px;padding:20px;margin-bottom:20px">';
@@ -424,7 +425,7 @@ if(below){var gDn=me.o-below.o;h+='<div style="flex:1;min-width:140px;background
 if(pos===0)h+='<div style="flex:1;min-width:140px;background:var(--bg2);border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px"><span style="font-size:18px">🏆</span><div style="font-size:13px;font-weight:600;color:var(--green)">Ты на первом месте!</div></div>';
 h+='</div>';
 // банки — мини тепловая
-var banks=bkM[myNick]||{};var bk=Object.keys(banks);
+var banks=bkM[me.m]||{};var bk=Object.keys(banks);
 if(bk.length){
 var bMax=0;bk.forEach(function(b){if(banks[b]>bMax)bMax=banks[b]});
 h+='<div><div style="font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:600">Объём по банкам</div>';
