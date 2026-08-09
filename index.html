@@ -107,7 +107,10 @@ function uq(a){var s={},r=[];a.forEach(function(v){if(v&&!s[v]){s[v]=1;r.push(v)
 function td(){var d=new Date(),p=function(n){return n<10?'0'+n:''+n};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())}
 function dl(){var f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;if(f&&t)return f.split('-').reverse().join('.')+' — '+t.split('-').reverse().join('.');return'Все'}
 function parseD(s){if(!s)return null;var p=s.split('.');return new Date(+p[2],+p[1]-1,+p[0])}
-function _onlineSet(){var t=td().split('-').reverse().join('.');var s={};if(D&&D.raw)D.raw.forEach(function(r){if(r.date===t)s[r.manager]=1});return s}
+var _olSet={};
+function _onlineSet(){return _olSet}
+function _fetchOnline(){gasCall('getonline',{},function(list){_olSet={};if(list)list.forEach(function(n){_olSet[n]=1})})}
+function _startHeartbeat(){gasCall('heartbeat',{});_fetchOnline();setInterval(function(){gasCall('heartbeat',{})},120000);setInterval(_fetchOnline,60000)}
 function bmd(rows){var mg=uq(rows.map(function(r){return r.manager}));return mg.map(function(m){var mr=rows.filter(function(r){return r.manager===m});var o=mr.reduce(function(a,r){return a+r.obj},0);var b=mr.filter(function(r){return r.blok>0}).reduce(function(a,r){return a+r.blok},0);return{m:m,c:mr.length,o:o,a:mr.length?o/mr.length:0,bs:b,bp:o?b/o*100:0}}).sort(function(a,b){return b.o-a.o})}
 function dc(id){if(ch[id]){ch[id].destroy();delete ch[id]}}
 function bo(extra){var o={responsive:true,maintainAspectRatio:true,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7c7f8a',font:{size:8},maxRotation:50},grid:{color:'rgba(47,50,65,.3)'}},y:{ticks:{color:'#7c7f8a',font:{size:9},callback:function(v){return v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(0)+'k':v}},grid:{color:'rgba(47,50,65,.3)'}}}};if(extra)for(var k in extra)o[k]=extra[k];return o}
@@ -126,7 +129,7 @@ gasCall('whoami',{},function(d){
     U=d.user;
     document.getElementById('authBox').style.display='none';
     document.getElementById('app').style.display='flex';
-    initApp();
+    initApp();_startHeartbeat();
   } else {
     document.getElementById('detectedEmail').innerHTML='<span style="color:var(--red)">'+(d.email?'Email <b>'+d.email+'</b> не зарегистрирован в CRM':'Не удалось определить аккаунт')+'</span>';
   }
