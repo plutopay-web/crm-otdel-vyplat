@@ -456,8 +456,13 @@ function sB(){var m=document.getElementById('bM').value,r=document.getElementByI
 function dB(id){if(confirm('Удалить?'))google.script.run.withSuccessHandler(function(){ts('Удалено');go('bonuses')}).deleteBonus(id)}
 function _fRep(n){return n.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function _repRows(){if(!D||!D.raw)return[];var f1=document.getElementById('repFrom'),f2=document.getElementById('repTo');if(!f1||!f2)return R;var from=f1.value,to=f2.value;var fd=from?new Date(from+'T00:00:00'):null,td2=to?new Date(to+'T23:59:59'):null;return D.raw.filter(function(r){var d=parseD(r.date);return d&&(!fd||d>=fd)&&(!td2||d<=td2)})}
+var _repTab='report';
+function _repTabBtn(id,label){return'<button class="tb" onclick="_repTab=\''+id+'\';rReport(document.getElementById(\'va\'))" style="'+(_repTab===id?'background:var(--accent);color:#fff;border-color:var(--accent)':'')+'">'+label+'</button>'}
 function rReport(el){
-var h='<div class="sc"><h3><span class="d"></span>Отчёт по метрикам</h3>';
+var tabs='<div style="display:flex;gap:8px;margin-bottom:16px">'+_repTabBtn('report','Отчёт')+_repTabBtn('shift_bills','Счета за смену')+_repTabBtn('material','Остаток по материалу')+'</div>';
+if(_repTab==='shift_bills'){el.innerHTML=tabs+'<div class="em">🚧 Счета за смену — в разработке</div>';return}
+if(_repTab==='material'){el.innerHTML=tabs+'<div class="em">🚧 Остаток по материалу — в разработке</div>';return}
+var h=tabs+'<div class="sc"><h3><span class="d"></span>Отчёт по метрикам</h3>';
 h+='<div class="fr"><div class="fg"><label>Дата от</label><input type="date" id="repFrom" value="'+(document.getElementById('dFrom')?document.getElementById('dFrom').value:'')+'"></div>';
 h+='<div class="fg"><label>Дата до</label><input type="date" id="repTo" value="'+(document.getElementById('dTo')?document.getElementById('dTo').value:'')+'"></div>';
 h+='<div class="fg" style="justify-content:flex-end"><button class="btn btn-a" onclick="buildReport()">Сгенерировать</button></div></div></div>';
