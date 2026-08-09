@@ -79,7 +79,7 @@ var _gcId=0;
 function gasCall(action,params,cb,eb,timeout){
   var cbName='_gc_'+(++_gcId)+'_'+Date.now();
   var tm=setTimeout(function(){delete window[cbName];if(eb)eb({message:'Timeout — проверь что залогинен в Google'})},(timeout||20)*1000);
-  window[cbName]=function(d){clearTimeout(tm);delete window[cbName];if(d&&d.error){if(eb)eb({message:d.error})}else{if(cb)cb(d)}};
+  window[cbName]=function(d){clearTimeout(tm);delete window[cbName];if(d&&d.error){if(d.error==='ACCESS_DENIED'){_kickUser();return}if(eb)eb({message:d.error})}else{if(cb)cb(d)}};
   var url=GAS_URL+'?action='+action+'&callback='+cbName;
   if(params)for(var k in params)if(params[k]!=null&&params[k]!=='')url+='&'+encodeURIComponent(k)+'='+encodeURIComponent(params[k]);
   var s=document.createElement('script');s.src=url;
@@ -188,6 +188,12 @@ function mkChart(id,type,labels,datasets,opts){dc(id);var x=document.getElementB
 Chart.defaults.interaction.intersect=false;Chart.defaults.elements.point.hitRadius=12;Chart.defaults.elements.point.hoverRadius=6;Chart.defaults.elements.bar.hoverBorderWidth=1;Chart.defaults.plugins.tooltip.backgroundColor='rgba(26,27,38,.95)';Chart.defaults.plugins.tooltip.titleColor='#e2e4ea';Chart.defaults.plugins.tooltip.bodyColor='#e2e4ea';Chart.defaults.plugins.tooltip.borderColor='rgba(47,50,65,.8)';Chart.defaults.plugins.tooltip.borderWidth=1;Chart.defaults.plugins.tooltip.padding=10;Chart.defaults.plugins.tooltip.cornerRadius=8;Chart.defaults.plugins.tooltip.titleFont={size:12,weight:'bold'};Chart.defaults.plugins.tooltip.bodyFont={size:11};Chart.defaults.plugins.tooltip.boxPadding=4;
 function hmColor(v,max){if(!max)return'rgba(40,42,54,.9)';var p=v/max;if(p<.25)return'rgba(129,140,248,.2)';if(p<.5)return'rgba(129,140,248,.4)';if(p<.75)return'rgba(129,140,248,.65)';return'rgba(129,140,248,.9)'}
 
+function _kickUser(){
+C=null;U=null;D=null;R=[];
+document.getElementById('app').style.display='none';
+document.getElementById('authBox').style.display='flex';
+document.getElementById('detectedEmail').innerHTML='<span style="color:var(--red)">Ваш аккаунт удалён или заблокирован.<br>Обратитесь к администратору.</span>';
+}
 // ══ AUTH: whoami → init ══
 document.getElementById('authBox').style.display='flex';
 document.getElementById('detectedEmail').textContent='Авторизация...';
