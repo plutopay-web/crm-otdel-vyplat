@@ -108,7 +108,7 @@ function td(){var d=new Date(),p=function(n){return n<10?'0'+n:''+n};return d.ge
 function dl(){var f=document.getElementById('dFrom').value,t=document.getElementById('dTo').value;if(f&&t)return f.split('-').reverse().join('.')+' — '+t.split('-').reverse().join('.');return'Все'}
 function parseD(s){if(!s)return null;var p=s.split('.');return new Date(+p[2],+p[1]-1,+p[0])}
 var _olSet={};
-function _matchMgr(nick,mgrName){if(!nick||!mgrName)return false;var a=nick.toLowerCase().replace(/[@_\s]/g,''),b=mgrName.toLowerCase().replace(/[@_\s]/g,'');return a===b||b.indexOf(a)===0||a.indexOf(b)===0}
+function _matchMgr(nick,mgrName){if(!nick||!mgrName)return false;var a=nick.toLowerCase().replace(/[@\s]/g,''),b=mgrName.toLowerCase().replace(/[@\s]/g,'');if(a===b)return true;var ab=a.replace(/_[a-z]{1,4}$/,''),bb=b.replace(/_[a-z]{1,4}$/,'');return ab===bb||ab.length>=4&&(bb.indexOf(ab)===0||ab.indexOf(bb)===0)}
 function _findMyMgr(md){var n=U.nick||U.name;for(var i=0;i<md.length;i++){if(_matchMgr(n,md[i].m))return i}return-1}
 function _onlineSet(){return _olSet}
 var _olNicks=[];
