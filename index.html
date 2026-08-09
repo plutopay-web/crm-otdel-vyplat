@@ -112,7 +112,7 @@ function _matchMgr(nick,mgrName){if(!nick||!mgrName)return false;var a=nick.toLo
 function _findMyMgr(md){var n=U.nick||U.name;for(var i=0;i<md.length;i++){if(_matchMgr(n,md[i].m))return i}return-1}
 function _onlineSet(){return _olSet}
 var _olNicks=[];
-function _fetchOnline(){gasCall('getonline',{},function(list){_olNicks=list||[];_olSet={};_olNicks.forEach(function(n){_olSet[n]=1})},function(e){console.log('getonline error:',e)})}
+function _fetchOnline(){gasCall('getonline',{},function(list){var changed=JSON.stringify(_olNicks)!==JSON.stringify(list||[]);_olNicks=list||[];_olSet={};_olNicks.forEach(function(n){_olSet[n]=1});if(changed&&(sec==='leaderboard'||sec==='managers'))go(sec)},function(e){console.log('getonline error:',e)})}
 function _isOnline(mgrName){for(var i=0;i<_olNicks.length;i++){if(_matchMgr(_olNicks[i],mgrName))return true}return false}
 function _startHeartbeat(){gasCall('heartbeat',{},null,function(e){console.log('heartbeat error:',e)});_fetchOnline();setInterval(function(){gasCall('heartbeat',{},null,function(e){console.log('heartbeat error:',e)})},120000);setInterval(_fetchOnline,60000)}
 function bmd(rows){var mg=uq(rows.map(function(r){return r.manager}));return mg.map(function(m){var mr=rows.filter(function(r){return r.manager===m});var o=mr.reduce(function(a,r){return a+r.obj},0);var b=mr.filter(function(r){return r.blok>0}).reduce(function(a,r){return a+r.blok},0);return{m:m,c:mr.length,o:o,a:mr.length?o/mr.length:0,bs:b,bp:o?b/o*100:0}}).sort(function(a,b){return b.o-a.o})}
