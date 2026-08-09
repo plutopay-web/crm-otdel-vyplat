@@ -57,9 +57,9 @@
 // ══ GAS JSONP API ══
 var GAS_URL='https://script.google.com/a/macros/flowlume.org/s/AKfycbyJSWU8LrPPSG9kHtE2k7QjclgdKjHdAkZZwSZkMAx4fjVibzAtCzWWq_JOqAeLvqq_YA/exec';
 var _gcId=0;
-function gasCall(action,params,cb,eb){
+function gasCall(action,params,cb,eb,timeout){
   var cbName='_gc_'+(++_gcId)+'_'+Date.now();
-  var tm=setTimeout(function(){delete window[cbName];if(eb)eb({message:'Timeout — проверь что залогинен в Google'})},20000);
+  var tm=setTimeout(function(){delete window[cbName];if(eb)eb({message:'Timeout — проверь что залогинен в Google'})},(timeout||20)*1000);
   window[cbName]=function(d){clearTimeout(tm);delete window[cbName];if(d&&d.error){if(eb)eb({message:d.error})}else{if(cb)cb(d)}};
   var url=GAS_URL+'?action='+action+'&callback='+cbName;
   if(params)for(var k in params)if(params[k]!=null&&params[k]!=='')url+='&'+encodeURIComponent(k)+'='+encodeURIComponent(params[k]);
@@ -75,7 +75,7 @@ var google={script:{run:{
     withFailureHandler:function(f2){this._f=f2;return this},
     withSuccessHandler:function(f2){this._s=f2;return this},
     loadCrmData:function(){gasCall('crmdata',{},this._s,this._f)},
-    forceSyncBridge:function(){gasCall('forcesync',{},this._s,this._f)},
+    forceSyncBridge:function(){gasCall('forcesync',{},this._s,this._f,120)},
     getFines:function(mf){gasCall('getfines',{manager:mf||''},this._s,this._f)},
     addFine:function(dt,mg,vl,cm,am){gasCall('addfine',{date:dt,manager:mg,violation:vl,comment:cm,amount:am},this._s,this._f)},
     deleteFine:function(id){gasCall('deletefine',{id:id},this._s,this._f)},
