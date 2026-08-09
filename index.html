@@ -459,8 +459,8 @@ function _repRows(){if(!D||!D.raw)return[];var f1=document.getElementById('repFr
 var _repTab='report';
 function _repTabBtn(id,label){return'<button class="tb" onclick="_repTab=\''+id+'\';rReport(document.getElementById(\'va\'))" style="'+(_repTab===id?'background:var(--accent);color:#fff;border-color:var(--accent)':'')+'">'+label+'</button>'}
 function rReport(el){
-var tabs='<div style="display:flex;gap:8px;margin-bottom:16px">'+_repTabBtn('report','Отчёт')+_repTabBtn('shift_bills','Счета за смену')+_repTabBtn('material','Остаток по материалу')+'</div>';
-if(_repTab==='shift_bills'){el.innerHTML=tabs+'<div class="em">🚧 Счета за смену — в разработке</div>';return}
+var tabs='<div style="display:flex;gap:8px;margin-bottom:16px">'+_repTabBtn('report','Отчёт')+_repTabBtn('shift_bills','Счета за сутки')+_repTabBtn('material','Остаток по материалу')+'</div>';
+if(_repTab==='shift_bills'){rShiftBills(el,tabs);return}
 if(_repTab==='material'){el.innerHTML=tabs+'<div class="em">🚧 Остаток по материалу — в разработке</div>';return}
 var h=tabs+'<div class="sc"><h3><span class="d"></span>Отчёт по метрикам</h3>';
 h+='<div class="fr"><div class="fg"><label>Дата от</label><input type="date" id="repFrom" value="'+(document.getElementById('dFrom')?document.getElementById('dFrom').value:'')+'"></div>';
@@ -504,6 +504,43 @@ txt+='\n\n'});
 navigator.clipboard.writeText(txt.trim()).then(function(){ts('Отчёт скопирован')});
 var pre=document.getElementById('repPreview');
 if(pre)pre.innerHTML='<div class="sc"><h3><span class="d"></span>Превью</h3><pre style="white-space:pre-wrap;font-size:12px;color:var(--text);font-family:inherit;line-height:1.6">'+txt.trim().replace(/</g,'&lt;')+'</pre></div>'}
+function rShiftBills(el,tabs){
+var h=tabs+'<div class="sc"><h3><span class="d"></span>Счета за сутки</h3>';
+h+='<div class="fr"><div class="fg"><label>Дата от</label><input type="date" id="sbFrom" value="'+(document.getElementById('dFrom')?document.getElementById('dFrom').value:'')+'"></div>';
+h+='<div class="fg"><label>Дата до</label><input type="date" id="sbTo" value="'+(document.getElementById('dTo')?document.getElementById('dTo').value:'')+'"></div>';
+h+='<div class="fg" style="justify-content:flex-end"><button class="btn btn-a" onclick="buildShiftBills()">Показать</button></div></div></div>';
+h+='<div id="sbBody"></div>';
+el.innerHTML=h;if(R.length)buildShiftBills()}
+function _sbRows(){if(!D||!D.raw)return[];var f1=document.getElementById('sbFrom'),f2=document.getElementById('sbTo');if(!f1||!f2)return R;var from=f1.value,to=f2.value;var fd=from?new Date(from+'T00:00:00'):null,td=to?new Date(to+'T23:59:59'):null;return D.raw.filter(function(r){var d=parseD(r.date);return d&&(!fd||d>=fd)&&(!td||d<=td)})}
+function buildShiftBills(){
+var rows=_sbRows(),el=document.getElementById('sbBody');
+if(!rows.length){el.innerHTML='<div class="em">Нет данных за выбранный период</div>';return}
+var filtered=rows.filter(function(r){return!/withdrawal/i.test(r.method)});
+var byDate={};filtered.forEach(function(r){
+var d=r.date;if(!byDate[d])byDate[d]={otr:0,blkNoDen:0,blk:0,total:0};
+byDate[d].total++;
+var st=(r.state||'').toLowerCase(),vb=(r.vid_bloka||'').toLowerCase();
+if(r.blok>0){
+if(/без.?ден/i.test(vb)||/без.?ден/i.test(st))byDate[d].blkNoDen++;
+else byDate[d].blk++;
+}else if(/отработ/i.test(st)){byDate[d].otr++}
+});
+var dorRows=rows.filter(function(r){return!/withdrawal/i.test(r.method)&&(/доработ/i.test(r.state)||/доработ/i.test(r.vid_bloka))});
+var dorByDate={};dorRows.forEach(function(r){dorByDate[r.date]=(dorByDate[r.date]||0)+1});
+var dates=Object.keys(byDate).sort(function(a,b){return parseD(b)-parseD(a)});
+var totOtr=0,totBlkND=0,totBlk=0,totAll=0,totDor=0;
+dates.forEach(function(d){var g=byDate[d];totOtr+=g.otr;totBlkND+=g.blkNoDen;totBlk+=g.blk;totAll+=g.total;totDor+=(dorByDate[d]||0)});
+var h='<div class="kg"><div class="kc"><div class="kl">Всего счетов</div><div class="kv bl">'+totAll+'</div></div>';
+h+='<div class="kc"><div class="kl">Отработано</div><div class="kv g">'+totOtr+'</div></div>';
+h+='<div class="kc"><div class="kl">Блок без денег</div><div class="kv y">'+totBlkND+'</div></div>';
+h+='<div class="kc"><div class="kl">Блок</div><div class="kv r">'+totBlk+'</div></div>';
+h+='<div class="kc"><div class="kl">Доработки</div><div class="kv ac">'+totDor+'</div></div></div>';
+h+='<div class="sc"><h3><span class="d"></span>По дням</h3><div class="tw"><table class="t"><thead><tr><th>Дата</th><th>Всего</th><th>Отработано</th><th>Блок без денег</th><th>Блок</th><th>Доработки</th></tr></thead><tbody>';
+dates.forEach(function(d){
+var g=byDate[d],dr=dorByDate[d]||0;
+h+='<tr><td>'+d+'</td><td>'+g.total+'</td><td class="g">'+g.otr+'</td><td class="y">'+g.blkNoDen+'</td><td class="r">'+g.blk+'</td><td class="ac">'+dr+'</td></tr>'});
+h+='</tbody></table></div></div>';
+el.innerHTML=h}
 function _curMonth(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1<10?'0':'')+(d.getMonth()+1)}
 function _monthLabel(m){var p=m.split('-');var mn=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];return mn[parseInt(p[1])-1]+' '+p[0]}
 var _payMonth=_curMonth();
