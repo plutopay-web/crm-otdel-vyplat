@@ -512,33 +512,45 @@ h+='<div class="fg" style="justify-content:flex-end"><button class="btn btn-a" o
 h+='<div id="sbBody"></div>';
 el.innerHTML=h;if(R.length)buildShiftBills()}
 function _sbRows(){if(!D||!D.raw)return[];var f1=document.getElementById('sbFrom'),f2=document.getElementById('sbTo');if(!f1||!f2)return R;var from=f1.value,to=f2.value;var fd=from?new Date(from+'T00:00:00'):null,td=to?new Date(to+'T23:59:59'):null;return D.raw.filter(function(r){var d=parseD(r.date);return d&&(!fd||d>=fd)&&(!td||d<=td)})}
+function _sbClassify(r,g){
+g.total++;
+var st=(r.state||'').toLowerCase(),vb=(r.vid_bloka||'').toLowerCase();
+if(r.blok>0){if(/без.?ден/i.test(vb)||/без.?ден/i.test(st))g.blkNoDen++;else g.blk++}
+else if(/отработ/i.test(st))g.otr++;
+if(/доработ/i.test(st)||/доработ/i.test(vb))g.dor++}
+function _sbEmpty(){return{otr:0,blkNoDen:0,blk:0,total:0,dor:0}}
+function _sbKpi(h,label,g){
+h+='<div class="kc"><div class="kl">'+label+' — всего</div><div class="kv bl">'+g.total+'</div></div>';
+h+='<div class="kc"><div class="kl">'+label+' — отработано</div><div class="kv g">'+g.otr+'</div></div>';
+h+='<div class="kc"><div class="kl">'+label+' — блок б/д</div><div class="kv y">'+g.blkNoDen+'</div></div>';
+h+='<div class="kc"><div class="kl">'+label+' — блок</div><div class="kv r">'+g.blk+'</div></div>';
+h+='<div class="kc"><div class="kl">'+label+' — доработки</div><div class="kv ac">'+g.dor+'</div></div>';
+return h}
 function buildShiftBills(){
 var rows=_sbRows(),el=document.getElementById('sbBody');
 if(!rows.length){el.innerHTML='<div class="em">Нет данных за выбранный период</div>';return}
 var filtered=rows.filter(function(r){return!/withdrawal/i.test(r.method)});
-var byDate={};filtered.forEach(function(r){
-var d=r.date;if(!byDate[d])byDate[d]={otr:0,blkNoDen:0,blk:0,total:0};
-byDate[d].total++;
-var st=(r.state||'').toLowerCase(),vb=(r.vid_bloka||'').toLowerCase();
-if(r.blok>0){
-if(/без.?ден/i.test(vb)||/без.?ден/i.test(st))byDate[d].blkNoDen++;
-else byDate[d].blk++;
-}else if(/отработ/i.test(st)){byDate[d].otr++}
-});
-var dorRows=rows.filter(function(r){return!/withdrawal/i.test(r.method)&&(/доработ/i.test(r.state)||/доработ/i.test(r.vid_bloka))});
-var dorByDate={};dorRows.forEach(function(r){dorByDate[r.date]=(dorByDate[r.date]||0)+1});
+var tot=_sbEmpty(),byBank={},byDate={};
+filtered.forEach(function(r){
+var d=r.date,b=r.bank;
+if(!byDate[d])byDate[d]=_sbEmpty();
+if(!byBank[b])byBank[b]={total:_sbEmpty(),dates:{}};
+if(!byBank[b].dates[d])byBank[b].dates[d]=_sbEmpty();
+_sbClassify(r,tot);_sbClassify(r,byDate[d]);_sbClassify(r,byBank[b].total);_sbClassify(r,byBank[b].dates[d])});
 var dates=Object.keys(byDate).sort(function(a,b){return parseD(b)-parseD(a)});
-var totOtr=0,totBlkND=0,totBlk=0,totAll=0,totDor=0;
-dates.forEach(function(d){var g=byDate[d];totOtr+=g.otr;totBlkND+=g.blkNoDen;totBlk+=g.blk;totAll+=g.total;totDor+=(dorByDate[d]||0)});
-var h='<div class="kg"><div class="kc"><div class="kl">Всего счетов</div><div class="kv bl">'+totAll+'</div></div>';
-h+='<div class="kc"><div class="kl">Отработано</div><div class="kv g">'+totOtr+'</div></div>';
-h+='<div class="kc"><div class="kl">Блок без денег</div><div class="kv y">'+totBlkND+'</div></div>';
-h+='<div class="kc"><div class="kl">Блок</div><div class="kv r">'+totBlk+'</div></div>';
-h+='<div class="kc"><div class="kl">Доработки</div><div class="kv ac">'+totDor+'</div></div></div>';
-h+='<div class="sc"><h3><span class="d"></span>По дням</h3><div class="tw"><table class="t"><thead><tr><th>Дата</th><th>Всего</th><th>Отработано</th><th>Блок без денег</th><th>Блок</th><th>Доработки</th></tr></thead><tbody>';
-dates.forEach(function(d){
-var g=byDate[d],dr=dorByDate[d]||0;
-h+='<tr><td>'+d+'</td><td>'+g.total+'</td><td class="g">'+g.otr+'</td><td class="y">'+g.blkNoDen+'</td><td class="r">'+g.blk+'</td><td class="ac">'+dr+'</td></tr>'});
+var banks=Object.keys(byBank).sort();
+var h='<div class="kg">';h=_sbKpi(h,'Итого',tot);h+='</div>';
+banks.forEach(function(b){
+h+='<div class="sc"><h3><span class="d"></span>'+b+'</h3>';
+h+='<div class="kg">';h=_sbKpi(h,b,byBank[b].total);h+='</div>';
+var bd=Object.keys(byBank[b].dates).sort(function(a,c){return parseD(c)-parseD(a)});
+h+='<div class="tw"><table class="t"><thead><tr><th>Дата</th><th>Всего</th><th>Отработано</th><th>Блок б/д</th><th>Блок</th><th>Доработки</th></tr></thead><tbody>';
+bd.forEach(function(d){var g=byBank[b].dates[d];
+h+='<tr><td>'+d+'</td><td>'+g.total+'</td><td class="g">'+g.otr+'</td><td class="y">'+g.blkNoDen+'</td><td class="r">'+g.blk+'</td><td class="ac">'+g.dor+'</td></tr>'});
+h+='</tbody></table></div></div>'});
+h+='<div class="sc"><h3><span class="d"></span>Все банки — по дням</h3><div class="tw"><table class="t"><thead><tr><th>Дата</th><th>Всего</th><th>Отработано</th><th>Блок б/д</th><th>Блок</th><th>Доработки</th></tr></thead><tbody>';
+dates.forEach(function(d){var g=byDate[d];
+h+='<tr><td>'+d+'</td><td>'+g.total+'</td><td class="g">'+g.otr+'</td><td class="y">'+g.blkNoDen+'</td><td class="r">'+g.blk+'</td><td class="ac">'+g.dor+'</td></tr>'});
 h+='</tbody></table></div></div>';
 el.innerHTML=h}
 function _curMonth(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1<10?'0':'')+(d.getMonth()+1)}
