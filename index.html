@@ -557,7 +557,7 @@ var _matCache=null;
 function rMaterial(el,tabs){
 el.innerHTML=tabs+'<div class="sc"><h3><span class="d"></span>Остаток по материалу</h3><div id="matBody"><div class="em">⏳ Загрузка...</div></div></div>';
 if(_matCache){_renderMat(_matCache);return}
-gasCall('getmaterial',{},function(data){_matCache=data;_renderMat(data)},function(e){document.getElementById('matBody').innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>'},60)}
+gasCall('getmaterial',{},function(data){_matCache=data;_renderMat(data)},function(e){document.getElementById('matBody').innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>'},120)}
 function _renderMat(data){
 var el=document.getElementById('matBody');if(!el)return;
 if(!data||!data.length){el.innerHTML='<div class="em">Нет данных</div>';return}
