@@ -454,7 +454,51 @@ function dF(id){if(confirm('Удалить?'))google.script.run.withSuccessHandl
 function rBonuses(el){var ce=U.level>=2,canDel=U.level>=3,h='';if(ce)h+='<div class="sc"><h3><span class="d"></span>💎 Бонус</h3><div class="fr"><div class="fg"><label>Менеджер</label><select id="bM"><option value="">—</option></select></div><div class="fg"><label>Причина</label><input type="text" id="bR" placeholder="Причина бонуса"></div><div class="fg"><label>Дата</label><input type="date" id="bD" value="'+td()+'"></div></div><div class="fr"><div class="fg"><label>$ Сумма</label><input type="number" id="bA"></div><div class="fg"><label>Комм.</label><input type="text" id="bC"></div></div><button class="btn btn-a" onclick="sB()">💎 Начислить</button></div>';h+='<div class="sc"><h3><span class="d"></span>Мои бонусы</h3><div id="bT"><div class="em">⏳</div></div></div>';el.innerHTML=h;var fl=U.level<3?(U.nick||U.name):null;google.script.run.withSuccessHandler(function(bo){var tb=document.getElementById('bT');if(!bo||!bo.length){tb.innerHTML='<div class="em">Пусто</div>';return}var t='<div class="tw"><table class="t"><tr><th>Дата</th><th>Менеджер</th><th>Причина</th><th>Комм.</th><th>$</th>'+(canDel?'<th></th>':'')+'</tr>';bo.forEach(function(x){t+='<tr><td>'+x.date+'</td><td><b>'+x.manager+'</b></td><td>'+x.reason+'</td><td style="color:var(--text2)">'+x.comment+'</td><td style="color:var(--green);font-weight:600">$'+x.amount+'</td>'+(canDel?'<td><button class="btn-g" onclick="dB(\''+x.id+'\')">✕</button></td>':'')+'</tr>'});tb.innerHTML=t+'</table></div>'}).getBonuses(fl);if(ce&&D){var s=document.getElementById('bM');(D.managers||[]).forEach(function(m){var o=document.createElement('option');o.value=m;o.textContent=m;s.appendChild(o)})}}
 function sB(){var m=document.getElementById('bM').value,r=document.getElementById('bR').value,d=document.getElementById('bD').value,a=document.getElementById('bA').value,c=document.getElementById('bC').value;if(!m||!r||!a){ts('Заполни поля',1);return}google.script.run.withSuccessHandler(function(){ts('Бонус!');go('bonuses')}).withFailureHandler(function(e){ts(e.message,1)}).addBonus(d,m,r,c,parseFloat(a))}
 function dB(id){if(confirm('Удалить?'))google.script.run.withSuccessHandler(function(){ts('Удалено');go('bonuses')}).deleteBonus(id)}
-function rReport(el){if(!R.length){el.innerHTML='<div class="em">Нет данных</div>';return}var md=bmd(R),to=md.reduce(function(a,d){return a+d.o},0);var h='<div class="sc"><h3><span class="d"></span>Отчёт</h3><div class="tw"><table class="t"><tr><th>#</th><th>Менеджер</th><th>Карт</th><th>Объём</th><th>Ср.</th><th>Блок</th><th>%</th><th>Доля</th></tr>';md.forEach(function(d,i){var sh=to?d.o/to*100:0;h+='<tr><td>'+(i+1)+'</td><td><b>'+d.m+'</b></td><td>'+d.c+'</td><td style="color:var(--green)">'+f(d.o)+'</td><td>'+f(d.a)+'</td><td style="color:var(--red)">'+f(d.bs)+'</td><td><span class="bd '+(d.bp<5?'bg':d.bp<10?'by':'br')+'">'+fp(d.bp)+'</span></td><td>'+sh.toFixed(1)+'%</td></tr>'});el.innerHTML=h+'</table></div></div>'}
+function _fRep(n){return n.toLocaleString('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function _repRows(){if(!D||!D.raw)return[];var f1=document.getElementById('repFrom'),f2=document.getElementById('repTo');if(!f1||!f2)return R;var from=f1.value,to=f2.value;var fd=from?new Date(from+'T00:00:00'):null,td2=to?new Date(to+'T23:59:59'):null;return D.raw.filter(function(r){var d=parseD(r.date);return d&&(!fd||d>=fd)&&(!td2||d<=td2)})}
+function rReport(el){
+var h='<div class="sc"><h3><span class="d"></span>Отчёт по метрикам</h3>';
+h+='<div class="fr"><div class="fg"><label>Дата от</label><input type="date" id="repFrom" value="'+(document.getElementById('dFrom')?document.getElementById('dFrom').value:'')+'"></div>';
+h+='<div class="fg"><label>Дата до</label><input type="date" id="repTo" value="'+(document.getElementById('dTo')?document.getElementById('dTo').value:'')+'"></div>';
+h+='<div class="fg" style="justify-content:flex-end"><button class="btn btn-a" onclick="buildReport()">Сгенерировать</button></div></div></div>';
+h+='<div id="repBody"></div>';
+el.innerHTML=h;if(R.length)buildReport()}
+function buildReport(){
+var rows=_repRows(),el=document.getElementById('repBody');
+if(!rows.length){el.innerHTML='<div class="em">Нет данных за выбранный период</div>';return}
+var groups={};rows.forEach(function(r){var k=r.bank+' · '+r.method;if(!groups[k])groups[k]={bank:r.bank,method:r.method,c:0,o:0,b:0};groups[k].c++;groups[k].o+=r.obj;groups[k].b+=r.blok});
+var keys=Object.keys(groups).sort(function(a,b){return groups[b].o-groups[a].o});
+var h='';
+keys.forEach(function(k,i){
+var g=groups[k],bp=g.o?g.b/g.o*100:0,avg=g.c?g.o/g.c:0;
+var old=document.getElementById('repC_'+i);var oldVal=old?old.value:'';
+h+='<div class="sc" style="margin-bottom:12px">';
+h+='<h3><span class="d"></span>'+k+'</h3>';
+h+='<div class="kg" style="margin-bottom:12px"><div class="kc"><div class="kl">Карт</div><div class="kv bl">'+g.c+'</div></div>';
+h+='<div class="kc"><div class="kl">Объём</div><div class="kv g">'+_fRep(g.o)+'</div></div>';
+h+='<div class="kc"><div class="kl">Блок</div><div class="kv r">'+_fRep(g.b)+'</div></div>';
+h+='<div class="kc"><div class="kl">% блока</div><div class="kv '+(bp<5?'g':bp<10?'y':'r')+'">'+bp.toFixed(1)+'%</div></div>';
+h+='<div class="kc"><div class="kl">Ср. проходка</div><div class="kv y">'+_fRep(avg)+'</div></div></div>';
+h+='<textarea id="repC_'+i+'" data-key="'+k+'" placeholder="Комментарий к секции..." style="width:100%;min-height:60px;background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical;outline:none">'+oldVal+'</textarea>';
+h+='</div>'});
+h+='<div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-a" onclick="copyReport()">📋 Скопировать отчёт</button></div>';
+h+='<div id="repPreview" style="margin-top:16px"></div>';
+el.innerHTML=h}
+function copyReport(){
+var rows=_repRows();
+var groups={};rows.forEach(function(r){var k=r.bank+' · '+r.method;if(!groups[k])groups[k]={c:0,o:0,b:0};groups[k].c++;groups[k].o+=r.obj;groups[k].b+=r.blok});
+var keys=Object.keys(groups).sort(function(a,b){return groups[b].o-groups[a].o});
+var txt='';
+keys.forEach(function(k,i){
+var g=groups[k],bp=g.o?g.b/g.o*100:0,avg=g.c?g.o/g.c:0;
+var cm=document.getElementById('repC_'+i);var comment=cm?cm.value.trim():'';
+txt+=k+'\n';
+txt+='В работе было '+g.c+' карт, общий объем составил '+_fRep(g.o)+', блок '+_fRep(g.b)+' = '+bp.toFixed(1)+'%, средняя проходка '+_fRep(avg);
+if(comment)txt+=' - '+comment;
+txt+='\n\n'});
+navigator.clipboard.writeText(txt.trim()).then(function(){ts('Отчёт скопирован')});
+var pre=document.getElementById('repPreview');
+if(pre)pre.innerHTML='<div class="sc"><h3><span class="d"></span>Превью</h3><pre style="white-space:pre-wrap;font-size:12px;color:var(--text);font-family:inherit;line-height:1.6">'+txt.trim().replace(/</g,'&lt;')+'</pre></div>'}
 function _curMonth(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1<10?'0':'')+(d.getMonth()+1)}
 function _monthLabel(m){var p=m.split('-');var mn=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];return mn[parseInt(p[1])-1]+' '+p[0]}
 var _payMonth=_curMonth();
