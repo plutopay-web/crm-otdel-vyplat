@@ -6,9 +6,9 @@
 <title>CRM Monolife</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-:root{--bg:#0f1117;--bg2:#1a1b26;--bg3:#282a36;--text:#e2e4ea;--text2:#7c7f8a;--border:#2f3241;--accent:#E8566D;--green:#4ADE80;--yellow:#FBBF24;--blue:#60A5FA;--red:#F87171;--sw:230px}
-[data-theme="light"]{--bg:#f0f2f5;--bg2:#ffffff;--bg3:#e4e6eb;--text:#1c1e21;--text2:#65676b;--border:#ced0d4;--accent:#E8566D;--green:#16a34a;--yellow:#ca8a04;--blue:#2563eb;--red:#dc2626}
-[data-theme="light"] .sb{background:rgba(255,255,255,.96)}
+:root{--bg:#0f1117;--bg2:#1a1b26;--bg3:#282a36;--text:#e2e4ea;--text2:#7c7f8a;--border:#2f3241;--accent:#E8566D;--green:#4ADE80;--yellow:#FBBF24;--blue:#60A5FA;--red:#F87171;--sw:230px;--sidebar:#1a1b26}
+[data-theme="light"]{--bg:#f0f2f5;--bg2:#ffffff;--bg3:#e4e6eb;--text:#1c1e21;--text2:#65676b;--border:#ced0d4;--accent:#E8566D;--green:#16a34a;--yellow:#ca8a04;--blue:#2563eb;--red:#dc2626;--sidebar:#ffffff}
+[data-theme="light"] .sb{background:var(--sidebar)}
 [data-theme="light"] .top{background:rgba(255,255,255,.92)}
 [data-theme="light"] .sc,[data-theme="light"] .kc{background:rgba(255,255,255,.92)}
 [data-theme="light"] .tb,[data-theme="light"] .fg input,[data-theme="light"] .fg select,[data-theme="light"] .db input,[data-theme="light"] .pi{background:var(--bg3);color:var(--text)}
@@ -19,7 +19,7 @@
 [data-theme="light"] .tip .tipb{background:var(--bg2)}
 [data-theme="light"] .btn-g{background:var(--bg3);border-color:var(--border);color:var(--text2)}
 [data-theme="light"] .bg{background:rgba(22,163,74,.1)}[data-theme="light"] .br{background:rgba(220,38,38,.1)}[data-theme="light"] .by{background:rgba(202,138,4,.1)}[data-theme="light"] .ba{background:rgba(232,86,109,.08)}
-.theme-light .sb{background:rgba(255,255,255,.96)!important}
+.theme-light .sb{background:var(--sidebar)!important}
 .theme-light .top{background:rgba(255,255,255,.92)!important}
 .theme-light .sc,.theme-light .kc{background:rgba(255,255,255,.92)!important}
 .theme-light .tb,.theme-light .fg input,.theme-light .fg select,.theme-light .db input,.theme-light .pi{background:var(--bg3)!important;color:var(--text)!important}
@@ -28,7 +28,7 @@
 *{box-sizing:border-box;margin:0;padding:0}body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;overflow:hidden;height:100vh}
 #bgC{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
 .app{display:flex;height:100vh;position:relative;z-index:1}
-.sb{width:var(--sw);background:rgba(26,27,38,.94);backdrop-filter:blur(12px);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.sb{width:var(--sw);background:var(--sidebar);backdrop-filter:blur(12px);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
 .sb-logo{padding:18px 20px;border-bottom:1px solid var(--border)}.sb-logo h2{font-size:15px;font-weight:700}.sb-logo h2 span{color:var(--accent)}.sb-logo .sub{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
 .sb-nav{flex:1;padding:12px 10px;overflow-y:auto}
 .ni{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .15s;margin-bottom:2px;font-weight:500}.ni:hover{background:rgba(232,86,109,.08);color:var(--text)}.ni.a{background:linear-gradient(135deg,var(--accent),#c44569);color:#fff;box-shadow:0 4px 16px rgba(232,86,109,.2)}.ni .ic{font-size:16px;width:22px;text-align:center}.ni .arrow{margin-left:auto;font-size:10px;transition:transform .2s}
@@ -88,8 +88,8 @@ function gasCall(action,params,cb,eb,timeout){
 }
 // ══ THEMES ══
 var THEMES={
-dark:{bg:'#0f1117',bg2:'#1a1b26',bg3:'#282a36',text:'#e2e4ea',text2:'#7c7f8a',border:'#2f3241',accent:'#E8566D',green:'#4ADE80',yellow:'#FBBF24',blue:'#60A5FA',red:'#F87171'},
-light:{bg:'#f0f2f5',bg2:'#ffffff',bg3:'#e4e6eb',text:'#1c1e21',text2:'#65676b',border:'#ced0d4',accent:'#E8566D',green:'#16a34a',yellow:'#ca8a04',blue:'#2563eb',red:'#dc2626'}
+dark:{bg:'#0f1117',bg2:'#1a1b26',bg3:'#282a36',text:'#e2e4ea',text2:'#7c7f8a',border:'#2f3241',accent:'#E8566D',green:'#4ADE80',yellow:'#FBBF24',blue:'#60A5FA',red:'#F87171',sidebar:'#1a1b26'},
+light:{bg:'#f0f2f5',bg2:'#ffffff',bg3:'#e4e6eb',text:'#1c1e21',text2:'#65676b',border:'#ced0d4',accent:'#E8566D',green:'#16a34a',yellow:'#ca8a04',blue:'#2563eb',red:'#dc2626',sidebar:'#ffffff'}
 };
 var _curTheme=localStorage.getItem('crm_theme')||'dark';
 function applyTheme(name){
@@ -125,7 +125,7 @@ if(sec==='profile')go('profile');
 }
 function saveCustomTheme(){
 var vars={};
-['bg','bg2','bg3','text','text2','border','accent','green','yellow','blue','red'].forEach(function(k){
+['bg','bg2','bg3','sidebar','text','text2','border','accent','green','yellow','blue','red'].forEach(function(k){
 var el=document.getElementById('ct_'+k);if(el)vars[k]=el.value});
 localStorage.setItem('crm_custom_theme',JSON.stringify(vars));
 applyTheme('custom');
@@ -741,14 +741,13 @@ function savePay(i,nick){
 }
 function rProfile(el){var ini=U.name.split(' ').map(function(w){return w[0]}).join('').toUpperCase().slice(0,2);var h='<div class="sc"><div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap"><div class="av" style="width:80px;height:80px;font-size:32px">'+(U.avatar?'<img src="'+U.avatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">':ini)+'</div><div style="flex:1;min-width:240px"><h2 style="font-size:20px;margin-bottom:4px">'+U.name+'</h2><div style="color:var(--text2);font-size:13px;margin-bottom:4px">'+U.email+'</div><span class="bd ba">'+U.roleLabel+'</span>'+(U.nick?'<div style="color:var(--text2);font-size:12px;margin-top:8px">Ник: <b style="color:var(--text)">'+U.nick+'</b></div>':'')+'</div></div></div>';
 h+='<div class="sc" style="margin-top:20px"><h3><span class="d"></span>Настройки</h3><div class="fr"><div class="fg"><label>Ник</label><input type="text" id="pN" value="'+(U.nick||'')+'"></div><div class="fg"><label>Аватар URL</label><input type="text" id="pA" value="'+(U.avatar||'')+'"></div></div><button class="btn btn-a" onclick="sP()">💾 Сохранить</button></div>';
-h+='<div class="sc" style="margin-top:20px"><h3><span class="d"></span>Фильтр аналитики по возрасту</h3><p style="font-size:12px;color:var(--text2);margin-bottom:12px">Задайте диапазон возраста — он будет автоматически применяться при открытии аналитики</p><div class="fr"><div class="fg"><label>Возраст от</label><input type="number" id="pAgeF" min="0" max="99" value="'+(localStorage.getItem('crm_age_from')||'')+'"></div><div class="fg"><label>Возраст до</label><input type="number" id="pAgeT" min="0" max="99" value="'+(localStorage.getItem('crm_age_to')||'')+'"></div></div><button class="btn btn-a" onclick="sAge()">💾 Сохранить диапазон</button></div>';
 h+='<div class="sc" style="margin-top:20px"><h3><span class="d"></span>Тема оформления</h3>';
 h+='<div style="display:flex;gap:8px;margin-bottom:14px">';
 h+='<button class="tb" onclick="applyTheme(\'dark\');go(\'profile\')" style="'+(_curTheme==='dark'?'background:var(--accent);color:#fff;border-color:var(--accent)':'')+'">🌙 Тёмная</button>';
 h+='<button class="tb" onclick="applyTheme(\'light\');go(\'profile\')" style="'+(_curTheme==='light'?'background:var(--accent);color:#fff;border-color:var(--accent)':'')+'">☀️ Светлая</button>';
 h+='<button class="tb" onclick="applyTheme(\'custom\');go(\'profile\')" style="'+(_curTheme==='custom'?'background:var(--accent);color:#fff;border-color:var(--accent)':'')+'">🎨 Кастомная</button></div>';
 var ct=JSON.parse(localStorage.getItem('crm_custom_theme')||'null')||THEMES.dark;
-var cFields=[['bg','Фон'],['bg2','Карточки'],['bg3','Поля ввода'],['text','Текст'],['text2','Текст вторичный'],['border','Границы'],['accent','Акцент'],['green','Зелёный'],['yellow','Жёлтый'],['blue','Синий'],['red','Красный']];
+var cFields=[['bg','Фон'],['bg2','Карточки'],['bg3','Поля ввода'],['sidebar','Боковая панель'],['text','Текст'],['text2','Текст вторичный'],['border','Границы'],['accent','Акцент'],['green','Зелёный'],['yellow','Жёлтый'],['blue','Синий'],['red','Красный']];
 h+='<p style="font-size:12px;color:var(--text2);margin-bottom:10px">Настрой свою палитру:</p><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px">';
 cFields.forEach(function(f){h+='<div style="display:flex;align-items:center;gap:6px"><input type="color" id="ct_'+f[0]+'" value="'+(ct[f[0]]||THEMES.dark[f[0]])+'" style="width:32px;height:28px;border:1px solid var(--border);border-radius:6px;padding:1px;cursor:pointer;background:transparent"><label style="font-size:11px;color:var(--text2)">'+f[1]+'</label></div>'});
 h+='</div><div style="margin-top:10px"><button class="btn btn-a" onclick="saveCustomTheme()">💾 Сохранить кастомную тему</button></div></div>';
