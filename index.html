@@ -656,17 +656,21 @@ dates.forEach(function(d){var g=byDate[d];
 h+='<tr><td>'+d+'</td><td>'+g.total+'</td><td class="g">'+g.otr+'</td><td class="y">'+g.blkNoDen+'</td><td class="r">'+g.blk+'</td><td class="ac">'+g.dor+'</td></tr>'});
 h+='</tbody></table></div></div>';
 el.innerHTML=h}
-var _matCache=null,_matSel={};
+var _matCache=null,_matSel={},_matMeth={ACQ:true,P2P:true};
 function rMaterial(el,tabs){
-el.innerHTML=tabs+'<div class="sc"><h3><span class="d"></span>Остаток по материалу</h3><div id="matFilter"></div><div id="matBody"><div class="em">⏳ Загрузка...</div></div></div>';
+el.innerHTML=tabs+'<div class="sc"><h3><span class="d"></span>Остаток по материалу <span style="font-size:11px;color:var(--text2);font-weight:400">за всё время</span></h3><div id="matFilter"></div><div id="matBody"><div class="em">⏳ Загрузка...</div></div></div>';
 if(_matCache){_renderMatFilter(_matCache);_renderMat(_matCache);return}
 gasCall('getmaterial',{},function(data){_matCache=data;_renderMatFilter(data);_renderMat(data)},function(e){document.getElementById('matBody').innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>'},120)}
 function _renderMatFilter(data){
 var fl=document.getElementById('matFilter');if(!fl)return;
-var allSt={};data.forEach(function(r){var s=r.state;if(s)allSt[s]=1});
-var states=Object.keys(allSt).sort();
+var allMeth={},allSt={};data.forEach(function(r){if(r.method)allMeth[r.method]=1;if(r.state)allSt[r.state]=1});
+var meths=Object.keys(allMeth).sort(),states=Object.keys(allSt).sort();
 if(!Object.keys(_matSel).length)states.forEach(function(s){_matSel[s]=true});
-var h='<div style="margin-bottom:12px"><label style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-weight:700;display:block;margin-bottom:6px">Фильтр по статусу</label>';
+var h='<div style="margin-bottom:12px"><label style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-weight:700;display:block;margin-bottom:6px">Источник</label>';
+h+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
+meths.forEach(function(m){var on=_matMeth[m];h+='<button class="btn-g" onclick="_matToggleMeth(\''+m+'\')" style="'+(on?'background:var(--blue);color:#fff;border-color:var(--blue)':'')+';font-size:11px;font-weight:700">'+m+'</button>'});
+h+='</div></div>';
+h+='<div style="margin-bottom:12px"><label style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-weight:700;display:block;margin-bottom:6px">Фильтр по статусу</label>';
 h+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
 h+='<button class="btn-g" onclick="_matToggleAll()" style="font-size:11px">Все / Ничего</button>';
 states.forEach(function(s){
@@ -676,12 +680,13 @@ h+='<button class="btn-g" onclick="_matToggle(\''+s.replace(/'/g,"\\'")+'\')" st
 ';font-size:11px">'+s+'</button>'});
 h+='</div></div>';
 fl.innerHTML=h}
+function _matToggleMeth(m){_matMeth[m]=!_matMeth[m];_renderMatFilter(_matCache);_renderMat(_matCache)}
 function _matToggle(s){_matSel[s]=!_matSel[s];_renderMatFilter(_matCache);_renderMat(_matCache)}
 function _matToggleAll(){var keys=Object.keys(_matSel),anyOn=keys.some(function(k){return _matSel[k]});keys.forEach(function(k){_matSel[k]=!anyOn});_renderMatFilter(_matCache);_renderMat(_matCache)}
 function _renderMat(data){
 var el=document.getElementById('matBody');if(!el)return;
 if(!data||!data.length){el.innerHTML='<div class="em">Нет данных</div>';return}
-var filtered=data.filter(function(r){return _matSel[r.state]});
+var filtered=data.filter(function(r){return _matSel[r.state]&&_matMeth[r.method]});
 if(!filtered.length){el.innerHTML='<div class="em">Нет данных по выбранным статусам</div>';return}
 var agg={};
 filtered.forEach(function(r){var key=(r.bank||'Другое')+'||'+r.state;if(!agg[key])agg[key]={bank:r.bank||'Другое',state:r.state,count:0};agg[key].count+=r.count});
@@ -696,7 +701,7 @@ h+='<div style="display:flex;justify-content:space-between;align-items:center;pa
 h+='<span><b>'+e.bank+'</b> '+e.state+'</span>';
 h+='<span class="'+(cls||'bl')+'" style="font-weight:700;font-size:16px">'+e.count+'</span></div>'});
 h+='<div class="kg" style="margin-top:16px"><div class="kc"><div class="kl">Всего материала</div><div class="kv bl">'+grandTotal+'</div></div></div>';
-h+='<div style="text-align:right;margin-top:8px"><button class="btn btn-a" onclick="_matCache=null;_matSel={};rReport(document.getElementById(\'va\'))">🔄 Обновить</button></div>';
+h+='<div style="text-align:right;margin-top:8px"><button class="btn btn-a" onclick="_matCache=null;_matSel={};_matMeth={ACQ:true,P2P:true};rReport(document.getElementById(\'va\'))">🔄 Обновить</button></div>';
 el.innerHTML=h}
 function _curMonth(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1<10?'0':'')+(d.getMonth()+1)}
 function _monthLabel(m){var p=m.split('-');var mn=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];return mn[parseInt(p[1])-1]+' '+p[0]}
