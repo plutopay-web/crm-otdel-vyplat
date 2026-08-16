@@ -683,29 +683,19 @@ var el=document.getElementById('matBody');if(!el)return;
 if(!data||!data.length){el.innerHTML='<div class="em">Нет данных</div>';return}
 var filtered=data.filter(function(r){return _matSel[r.state]});
 if(!filtered.length){el.innerHTML='<div class="em">Нет данных по выбранным статусам</div>';return}
-var methods={};
-filtered.forEach(function(r){
-var m=r.method||'Другое';
-if(!methods[m])methods[m]={};
-var b=r.bank;if(!methods[m][b])methods[m][b]=[];
-methods[m][b].push({state:r.state,count:r.count})});
-var h='';var mkeys=Object.keys(methods).sort();
-mkeys.forEach(function(m){
-h+='<div class="sc"><h3><span class="d"></span>'+m+'</h3>';
-var banks=Object.keys(methods[m]).sort();
-var total=0;
-banks.forEach(function(b){
-var entries=methods[m][b].sort(function(a,c){return c.count-a.count});
-entries.forEach(function(e){
-total+=e.count;
+var agg={};
+filtered.forEach(function(r){var key=(r.bank||'Другое')+'||'+r.state;if(!agg[key])agg[key]={bank:r.bank||'Другое',state:r.state,count:0};agg[key].count+=r.count});
+var items=[];for(var k in agg)items.push(agg[k]);
+items.sort(function(a,b){if(a.bank.toLowerCase()<b.bank.toLowerCase())return -1;if(a.bank.toLowerCase()>b.bank.toLowerCase())return 1;return b.count-a.count});
+var h='',prevBank='',grandTotal=0;
+items.forEach(function(e){
+grandTotal+=e.count;
+if(e.bank!==prevBank){if(prevBank)h+='<div style="height:8px"></div>';prevBank=e.bank}
 var cls=(/готов/i.test(e.state))?'g':(/доработ/i.test(e.state))?'y':'';
 h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-bottom:1px solid var(--border)">';
-h+='<span>'+b+' <span style="color:var(--text2)">«'+e.state+'»</span></span>';
-h+='<span class="'+(cls||'bl')+'" style="font-weight:700;font-size:16px">'+e.count+'</span></div>'})});
-h+='<div style="padding:8px 12px;font-weight:700;border-top:2px solid var(--border);display:flex;justify-content:space-between"><span>Итого '+m+'</span><span class="bl">'+total+'</span></div>';
-h+='</div>'});
-var grandTotal=filtered.reduce(function(a,r){return a+r.count},0);
-h+='<div class="kg"><div class="kc"><div class="kl">Всего материала</div><div class="kv bl">'+grandTotal+'</div></div></div>';
+h+='<span><b>'+e.bank+'</b> '+e.state+'</span>';
+h+='<span class="'+(cls||'bl')+'" style="font-weight:700;font-size:16px">'+e.count+'</span></div>'});
+h+='<div class="kg" style="margin-top:16px"><div class="kc"><div class="kl">Всего материала</div><div class="kv bl">'+grandTotal+'</div></div></div>';
 h+='<div style="text-align:right;margin-top:8px"><button class="btn btn-a" onclick="_matCache=null;_matSel={};rReport(document.getElementById(\'va\'))">🔄 Обновить</button></div>';
 el.innerHTML=h}
 function _curMonth(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1<10?'0':'')+(d.getMonth()+1)}
