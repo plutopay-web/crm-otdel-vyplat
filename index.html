@@ -638,20 +638,21 @@ if(df&&df.value){var d1=new Date(df.value);fi=fi.filter(function(x){var xd=parse
 if(dt&&dt.value){var d2=new Date(dt.value);d2.setHours(23,59,59);fi=fi.filter(function(x){var xd=parseD(x.date);return xd&&xd<=d2})}
 if(mg&&mg.value)fi=fi.filter(function(x){return x.manager===mg.value});
 if(!fi.length){el.innerHTML='<div class="em">Нет штрафов за выбранный период</div>';return}
-var total=0,byMgr={},byViol={};
-fi.forEach(function(x){total+=x.amount;if(!byMgr[x.manager])byMgr[x.manager]=0;byMgr[x.manager]+=x.amount;var v=x.violation||'Без причины';if(!byViol[v])byViol[v]={c:0,sum:0};byViol[v].c++;byViol[v].sum+=x.amount});
+var total=0,totalErr=0,byMgr={},byViol={};
+fi.forEach(function(x){total+=x.amount;var em=x.comment.match(/₴([\d.]+)\s*×/);if(em)totalErr+=parseFloat(em[1])||0;if(!byMgr[x.manager])byMgr[x.manager]={sum:0,err:0};byMgr[x.manager].sum+=x.amount;if(em)byMgr[x.manager].err+=parseFloat(em[1])||0;var v=x.violation||'Без причины';if(!byViol[v])byViol[v]={c:0,sum:0};byViol[v].c++;byViol[v].sum+=x.amount});
 var h='<div class="kg" style="margin-bottom:16px"><div class="kc"><div class="kl">Штрафов</div><div class="kv r">'+fi.length+'</div></div>';
-h+='<div class="kc"><div class="kl">Сумма</div><div class="kv r">$'+f(total)+'</div></div>';
+h+='<div class="kc"><div class="kl">Штраф $</div><div class="kv r">$'+f(total)+'</div></div>';
+h+=(totalErr?'<div class="kc"><div class="kl">Ошибки ₴</div><div class="kv y">₴'+f(totalErr)+'</div></div>':'');
 h+='<div class="kc"><div class="kl">Менеджеров</div><div class="kv bl">'+Object.keys(byMgr).length+'</div></div></div>';
-h+='<div class="tw"><table class="t"><tr><th>#</th><th>Дата</th><th>Менеджер</th><th>Нарушение</th><th>Комментарий</th><th>Сумма</th><th>Выписал</th></tr>';
+h+='<div class="tw"><table class="t"><tr><th>#</th><th>Дата</th><th>Менеджер</th><th>Нарушение</th><th>Комментарий</th><th>Ошибка ₴</th><th>Штраф $</th><th>Выписал</th></tr>';
 fi.sort(function(a,b){return(parseD(a.date)||0)-(parseD(b.date)||0)});
-fi.forEach(function(x,i){h+='<tr><td style="color:var(--text2);font-size:11px">'+(i+1)+'</td><td>'+x.date+'</td><td><b>'+x.manager+'</b></td><td>'+x.violation+'</td><td style="color:var(--text2);font-size:12px">'+x.comment+'</td><td style="color:var(--red);font-weight:600">$'+x.amount+'</td><td style="font-size:11px;color:var(--text2)">'+(x.issued_by||'')+'</td></tr>'});
+fi.forEach(function(x,i){var errMatch=x.comment.match(/₴([\d.]+)\s*×/),errAmt=errMatch?errMatch[1]:'',cleanCom=x.comment.replace(/\s*\|\s*₴[\d.]+\s*×.*$/,'').trim();h+='<tr><td style="color:var(--text2);font-size:11px">'+(i+1)+'</td><td>'+x.date+'</td><td><b>'+x.manager+'</b></td><td>'+x.violation+'</td><td style="color:var(--text2);font-size:12px">'+cleanCom+'</td><td style="color:var(--yellow);font-weight:600">'+(errAmt?'₴'+errAmt:'—')+'</td><td style="color:var(--red);font-weight:600">$'+x.amount+'</td><td style="font-size:11px;color:var(--text2)">'+(x.issued_by||'')+'</td></tr>'});
 h+='</table></div>';
 h+='<div class="sc" style="margin-top:16px"><h3><span class="d" style="background:var(--red)"></span>По менеджерам</h3>';
-h+='<div class="tw"><table class="t"><tr><th>Менеджер</th><th>Кол-во</th><th>Сумма</th></tr>';
-var mgrKeys=Object.keys(byMgr).sort(function(a,b){return byMgr[b]-byMgr[a]});
-mgrKeys.forEach(function(m){var cnt=fi.filter(function(x){return x.manager===m}).length;h+='<tr><td><b>'+m+'</b></td><td>'+cnt+'</td><td style="color:var(--red);font-weight:600">$'+f(byMgr[m])+'</td></tr>'});
-h+='<tr style="border-top:2px solid var(--border)"><td style="text-align:right;font-weight:700" colspan="2">Итого на компанию:</td><td style="color:var(--red);font-weight:700;font-size:16px">$'+f(total)+'</td></tr>';
+h+='<div class="tw"><table class="t"><tr><th>Менеджер</th><th>Кол-во</th><th>Ошибки ₴</th><th>Штраф $</th></tr>';
+var mgrKeys=Object.keys(byMgr).sort(function(a,b){return byMgr[b].sum-byMgr[a].sum});
+mgrKeys.forEach(function(m){var cnt=fi.filter(function(x){return x.manager===m}).length;h+='<tr><td><b>'+m+'</b></td><td>'+cnt+'</td><td style="color:var(--yellow);font-weight:600">'+(byMgr[m].err?'₴'+f(byMgr[m].err):'—')+'</td><td style="color:var(--red);font-weight:600">$'+f(byMgr[m].sum)+'</td></tr>'});
+h+='<tr style="border-top:2px solid var(--border)"><td style="text-align:right;font-weight:700" colspan="2">Итого на компанию:</td><td style="color:var(--yellow);font-weight:700">'+(totalErr?'₴'+f(totalErr):'')+'</td><td style="color:var(--red);font-weight:700;font-size:16px">$'+f(total)+'</td></tr>';
 h+='</table></div></div>';
 h+='<div class="sc" style="margin-top:16px"><h3><span class="d" style="background:var(--yellow)"></span>По нарушениям</h3>';
 h+='<div class="tw"><table class="t"><tr><th>Нарушение</th><th>Кол-во</th><th>Сумма</th></tr>';
