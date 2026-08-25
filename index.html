@@ -566,7 +566,8 @@ function _repRows(){if(!D||!D.raw)return[];var f1=document.getElementById('repFr
 var _repTab='report';
 function _repTabBtn(id,label){return'<button class="tb" onclick="_repTab=\''+id+'\';rReport(document.getElementById(\'va\'))" style="'+(_repTab===id?'background:var(--accent);color:#fff;border-color:var(--accent)':'')+'">'+label+'</button>'}
 function rReport(el){
-var tabs='<div style="display:flex;gap:8px;margin-bottom:16px">'+_repTabBtn('report','Отчёт')+_repTabBtn('shift_bills','Счета за сутки')+_repTabBtn('material','Остаток по материалу')+'</div>';
+var tabs='<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">'+_repTabBtn('report','Отчёт')+_repTabBtn('fines_report','Штрафы')+_repTabBtn('shift_bills','Счета за сутки')+_repTabBtn('material','Остаток по материалу')+'</div>';
+if(_repTab==='fines_report'){rFinesReport(el,tabs);return}
 if(_repTab==='shift_bills'){rShiftBills(el,tabs);return}
 if(_repTab==='material'){rMaterial(el,tabs);return}
 var h=tabs+'<div class="sc"><h3><span class="d"></span>Отчёт по метрикам</h3>';
@@ -611,6 +612,70 @@ txt+='\n\n'});
 navigator.clipboard.writeText(txt.trim()).then(function(){ts('Отчёт скопирован')});
 var pre=document.getElementById('repPreview');
 if(pre)pre.innerHTML='<div class="sc"><h3><span class="d"></span>Превью</h3><pre style="white-space:pre-wrap;font-size:12px;color:var(--text);font-family:inherit;line-height:1.6">'+txt.trim().replace(/</g,'&lt;')+'</pre></div>'}
+var _frData=null;
+function rFinesReport(el,tabs){
+var now=new Date(),p=function(n){return n<10?'0'+n:''+n};
+var mStart=now.getFullYear()+'-'+p(now.getMonth()+1)+'-01';
+var today=now.getFullYear()+'-'+p(now.getMonth()+1)+'-'+p(now.getDate());
+var h=tabs+'<div class="sc"><h3><span class="d"></span>Отчёт по штрафам</h3>';
+h+='<div class="fr"><div class="fg"><label>Дата от</label><input type="date" id="frFrom" value="'+mStart+'"></div>';
+h+='<div class="fg"><label>Дата до</label><input type="date" id="frTo" value="'+today+'"></div>';
+h+='<div class="fg"><label>Менеджер</label><select id="frMgr" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:14px"><option value="">Все</option></select></div>';
+h+='<div class="fg" style="justify-content:flex-end"><button class="btn btn-a" onclick="_buildFR()">Сгенерировать</button></div></div></div>';
+h+='<div id="frBody"><div class="em">⏳ Загрузка...</div></div>';
+el.innerHTML=h;
+google.script.run.withSuccessHandler(function(fi){
+_frData=fi;
+var s=document.getElementById('frMgr');if(s&&fi){var ms={};fi.forEach(function(x){if(x.manager)ms[x.manager]=1});Object.keys(ms).sort().forEach(function(m){var o=document.createElement('option');o.value=m;o.textContent=m;s.appendChild(o)})}
+_buildFR()
+}).withFailureHandler(function(e){document.getElementById('frBody').innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>'}).getFines('')}
+function _buildFR(){
+var el=document.getElementById('frBody');
+if(!_frData||!_frData.length){el.innerHTML='<div class="em">Нет штрафов</div>';return}
+var df=document.getElementById('frFrom'),dt=document.getElementById('frTo'),mg=document.getElementById('frMgr');
+var fi=_frData.slice();
+if(df&&df.value){var d1=new Date(df.value);fi=fi.filter(function(x){var xd=parseD(x.date);return xd&&xd>=d1})}
+if(dt&&dt.value){var d2=new Date(dt.value);d2.setHours(23,59,59);fi=fi.filter(function(x){var xd=parseD(x.date);return xd&&xd<=d2})}
+if(mg&&mg.value)fi=fi.filter(function(x){return x.manager===mg.value});
+if(!fi.length){el.innerHTML='<div class="em">Нет штрафов за выбранный период</div>';return}
+var total=0,byMgr={},byViol={};
+fi.forEach(function(x){total+=x.amount;if(!byMgr[x.manager])byMgr[x.manager]=0;byMgr[x.manager]+=x.amount;var v=x.violation||'Без причины';if(!byViol[v])byViol[v]={c:0,sum:0};byViol[v].c++;byViol[v].sum+=x.amount});
+var h='<div class="kg" style="margin-bottom:16px"><div class="kc"><div class="kl">Штрафов</div><div class="kv r">'+fi.length+'</div></div>';
+h+='<div class="kc"><div class="kl">Сумма</div><div class="kv r">$'+f(total)+'</div></div>';
+h+='<div class="kc"><div class="kl">Менеджеров</div><div class="kv bl">'+Object.keys(byMgr).length+'</div></div></div>';
+h+='<div class="tw"><table class="t"><tr><th>#</th><th>Дата</th><th>Менеджер</th><th>Нарушение</th><th>Комментарий</th><th>Сумма</th><th>Выписал</th></tr>';
+fi.sort(function(a,b){return(parseD(a.date)||0)-(parseD(b.date)||0)});
+fi.forEach(function(x,i){h+='<tr><td style="color:var(--text2);font-size:11px">'+(i+1)+'</td><td>'+x.date+'</td><td><b>'+x.manager+'</b></td><td>'+x.violation+'</td><td style="color:var(--text2);font-size:12px">'+x.comment+'</td><td style="color:var(--red);font-weight:600">$'+x.amount+'</td><td style="font-size:11px;color:var(--text2)">'+(x.issued_by||'')+'</td></tr>'});
+h+='</table></div>';
+h+='<div class="sc" style="margin-top:16px"><h3><span class="d" style="background:var(--red)"></span>По менеджерам</h3>';
+h+='<div class="tw"><table class="t"><tr><th>Менеджер</th><th>Кол-во</th><th>Сумма</th></tr>';
+var mgrKeys=Object.keys(byMgr).sort(function(a,b){return byMgr[b]-byMgr[a]});
+mgrKeys.forEach(function(m){var cnt=fi.filter(function(x){return x.manager===m}).length;h+='<tr><td><b>'+m+'</b></td><td>'+cnt+'</td><td style="color:var(--red);font-weight:600">$'+f(byMgr[m])+'</td></tr>'});
+h+='<tr style="border-top:2px solid var(--border)"><td style="text-align:right;font-weight:700" colspan="2">Итого на компанию:</td><td style="color:var(--red);font-weight:700;font-size:16px">$'+f(total)+'</td></tr>';
+h+='</table></div></div>';
+h+='<div class="sc" style="margin-top:16px"><h3><span class="d" style="background:var(--yellow)"></span>По нарушениям</h3>';
+h+='<div class="tw"><table class="t"><tr><th>Нарушение</th><th>Кол-во</th><th>Сумма</th></tr>';
+var vKeys=Object.keys(byViol).sort(function(a,b){return byViol[b].sum-byViol[a].sum});
+vKeys.forEach(function(v){h+='<tr><td>'+v+'</td><td>'+byViol[v].c+'</td><td style="color:var(--red);font-weight:600">$'+f(byViol[v].sum)+'</td></tr>'});
+h+='</table></div></div>';
+h+='<div style="margin-top:12px"><button class="btn btn-a" onclick="_copyFR()">📋 Скопировать отчёт</button></div>';
+el.innerHTML=h}
+function _copyFR(){
+var df=document.getElementById('frFrom'),dt=document.getElementById('frTo');
+var period=(df?df.value:'')+'—'+(dt?dt.value:'');
+if(!_frData)return;var fi=_frData.slice();
+if(df&&df.value){var d1=new Date(df.value);fi=fi.filter(function(x){var xd=parseD(x.date);return xd&&xd>=d1})}
+if(dt&&dt.value){var d2=new Date(dt.value);d2.setHours(23,59,59);fi=fi.filter(function(x){var xd=parseD(x.date);return xd&&xd<=d2})}
+var mg=document.getElementById('frMgr');if(mg&&mg.value)fi=fi.filter(function(x){return x.manager===mg.value});
+var total=0,byMgr={};
+fi.forEach(function(x){total+=x.amount;if(!byMgr[x.manager])byMgr[x.manager]=0;byMgr[x.manager]+=x.amount});
+var txt='Отчёт по штрафам '+period+'\n\n';
+fi.sort(function(a,b){return(parseD(a.date)||0)-(parseD(b.date)||0)});
+fi.forEach(function(x){txt+=x.date+' | '+x.manager+' | '+x.violation+(x.comment?' ('+x.comment+')':'')+' | $'+x.amount+'\n'});
+txt+='\n--- По менеджерам ---\n';
+Object.keys(byMgr).sort(function(a,b){return byMgr[b]-byMgr[a]}).forEach(function(m){txt+=m+': $'+f(byMgr[m])+'\n'});
+txt+='\nИтого на компанию: $'+f(total);
+navigator.clipboard.writeText(txt).then(function(){ts('Отчёт скопирован')})}
 function rShiftBills(el,tabs){
 var h=tabs+'<div class="sc"><h3><span class="d"></span>Счета за сутки</h3>';
 h+='<div class="fr"><div class="fg"><label>Дата от</label><input type="date" id="sbFrom" value="'+(document.getElementById('dFrom')?document.getElementById('dFrom').value:'')+'"></div>';
