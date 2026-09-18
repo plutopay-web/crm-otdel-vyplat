@@ -163,7 +163,8 @@ var google={script:{run:{
     getAutoOverpay:function(){gasCall('getautooverpay',{},this._s,this._f)},
     addAutoOverpay:function(dt,mg,oid,amt,bank,rec,com){gasCall('addautooverpay',{date:dt,manager:mg,out_id:oid,amount:amt,bank:bank,recipient:rec,comment:com},this._s,this._f)},
     deleteAutoOverpay:function(id){gasCall('deleteautooverpay',{id:id},this._s,this._f)},
-    getOvertimeData:function(){gasCall('getovertime',{},this._s,this._f)}
+    getOvertimeData:function(){gasCall('getovertime',{},this._s,this._f)},
+    getTransitData:function(fr,to){gasCall('gettransit',{from:fr,to:to},this._s,this._f,30)}
   };return o},
   withFailureHandler:function(fn){return this.withSuccessHandler(function(){}).withFailureHandler(fn)}
 }}};
@@ -523,9 +524,77 @@ return h+'</div>';
 var _leadTab='manual';
 function rLead(el){
 var tabs='<div style="display:flex;gap:8px;margin-bottom:16px"><button class="tb" id="ltManual" onclick="_leadTab=\'manual\';rLead(document.getElementById(\'va\'))" style="'+ (_leadTab==='manual'?'background:var(--accent);color:#fff;border-color:var(--accent)':'') +'">Manual</button><button class="tb" id="ltTransit" onclick="_leadTab=\'transit\';rLead(document.getElementById(\'va\'))" style="'+ (_leadTab==='transit'?'background:var(--accent);color:#fff;border-color:var(--accent)':'') +'">Транзит</button><button class="tb" id="ltOvertime" onclick="_leadTab=\'overtime\';rLead(document.getElementById(\'va\'))" style="'+ (_leadTab==='overtime'?'background:var(--accent);color:#fff;border-color:var(--accent)':'') +'">Переработки</button></div>';
-if(_leadTab==='transit'){el.innerHTML=tabs+'<div class="em">🚧 Транзит — в разработке</div>';return}
+if(_leadTab==='transit'){_rTransit(el,tabs);return}
 if(_leadTab==='overtime'){el.innerHTML=tabs+'<div style="text-align:center;margin-bottom:16px"><span style="font-size:14px;font-weight:600;color:var(--text2)">'+_monthLabel(_curMonth())+'</span></div><div id="otBody"><div class="em">⏳</div></div>';google.script.run.withSuccessHandler(function(rows){var ob=document.getElementById('otBody');if(!rows||!rows.length){ob.innerHTML='<div class="em">Нет переработок за этот период</div>';return}var sorted=rows.filter(function(r){return r.hours>0});if(!sorted.length){ob.innerHTML='<div class="em">Нет переработок за этот период</div>';return}var me=['🥇','🥈','🥉'],bu=[100,50,50],mc=['#FBBF24','#94a3b8','#cd7f32'];var p='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:20px">';sorted.slice(0,3).forEach(function(d,i){p+='<div style="background:rgba(26,27,38,.88);border:1.5px solid '+mc[i]+';border-radius:14px;padding:16px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:26px">'+me[i]+'</span><span class="bd ba" style="font-weight:700">$'+bu[i]+'</span></div><div style="font-size:15px;font-weight:700;margin-bottom:10px">'+d.name+'</div><div style="background:var(--bg3);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--text2)">Доп. часы</div><div style="font-size:22px;font-weight:700;color:var(--yellow)">'+d.hours+'</div></div></div>'});p+='</div>';var mx=sorted[0].hours,tb='<div class="sc"><h3><span class="d"></span>Рейтинг переработок</h3><div class="tw"><table class="t"><tr><th>#</th><th>Менеджер</th><th>Доп. часы</th><th>Бонус</th></tr>';sorted.forEach(function(d,i){var w=Math.round(d.hours/mx*100),bonus=i<3?'$'+bu[i]:'—';tb+='<tr><td style="font-weight:700;color:'+(i<3?mc[i]:'var(--text2)')+';">'+(me[i]||i+1)+'</td><td><b>'+d.name+'</b></td><td><div class="pg"><div class="pt"><div class="pf" style="width:'+w+'%;background:var(--yellow)"></div></div><span style="color:var(--yellow);font-weight:600">'+d.hours+'</span></div></td><td style="font-weight:600;color:'+(i<3?'var(--green)':'var(--text2)')+'">'+bonus+'</td></tr>'});tb+='</table></div></div>';ob.innerHTML=p+tb}).withFailureHandler(function(e){document.getElementById('otBody').innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>'}).getOvertimeData();return}
 if(!R.length){el.innerHTML=tabs+'<div class="em">Нет данных</div>';return}var md=bmd(R),me=['🥇','🥈','🥉'],bu=[250,125,75],mc=['#FBBF24','#94a3b8','#cd7f32'];var dM={},bkM={};R.forEach(function(x){if(!dM[x.manager])dM[x.manager]={};dM[x.manager][x.date]=true;if(!bkM[x.manager])bkM[x.manager]={};bkM[x.manager][x.bank]=(bkM[x.manager][x.bank]||0)+x.obj});var myCard=_myCard(md,bkM);var p=tabs+myCard+'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:20px">';md.slice(0,3).forEach(function(d,i){p+='<div style="background:rgba(26,27,38,.88);border:1.5px solid '+mc[i]+';border-radius:14px;padding:16px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:26px">'+me[i]+'</span><span class="bd ba" style="font-weight:700">$'+bu[i]+'</span></div><div style="font-size:15px;font-weight:700;margin-bottom:10px"><span class="on '+(_isOnline(d.m)?'g':'off')+'"></span>'+d.m+'</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div style="background:var(--bg3);border-radius:6px;padding:6px;text-align:center"><div style="font-size:8px;color:var(--text2)">Объём</div><div style="font-size:14px;font-weight:700;color:var(--green)">'+f(d.o)+'</div></div><div style="background:var(--bg3);border-radius:6px;padding:6px;text-align:center"><div style="font-size:8px;color:var(--text2)">%блока</div><div style="font-size:14px;font-weight:700;color:'+(d.bp<10?'var(--green)':'var(--red)')+'">'+fp(d.bp)+'</div></div></div></div>'});p+='</div>';var mx=md[0].o,tb='<div class="sc"><h3><span class="d"></span>Рейтинг</h3><div class="tw"><table class="t"><tr><th>#</th><th>Менеджер</th><th>Карт</th><th>Объём</th><th>Ср/карту</th><th>Ср/смена</th><th>Блок</th><th>%</th></tr>';md.forEach(function(d,i){var w=Math.round(d.o/mx*100),dc=Object.keys(dM[d.m]||{}).length||1,bk=bkM[d.m]||{},tt='';for(var b in bk)tt+='<div style="display:flex;justify-content:space-between;gap:12px"><span>'+b+'</span><span style="color:var(--green);font-weight:600">'+f(bk[b])+' ₴</span></div>';tb+='<tr><td style="font-weight:700;color:'+(i<3?mc[i]:'var(--text2)')+';">'+(me[i]||i+1)+'</td><td><span class="on '+(_isOnline(d.m)?'g':'off')+'"></span><b>'+d.m+'</b></td><td>'+d.c+'</td><td><div class="tip"><div class="pg"><div class="pt"><div class="pf" style="width:'+w+'%;background:var(--green)"></div></div><span>'+f(d.o)+'</span></div><div class="tipb">'+tt+'</div></div></td><td>'+f(d.a)+'</td><td style="color:var(--yellow);font-weight:600">'+f(Math.round(d.o/dc))+'</td><td>'+f(d.bs)+'</td><td><span class="bd '+(d.bp<5?'bg':d.bp<10?'by':'br')+'">'+fp(d.bp)+'</span></td></tr>'});el.innerHTML=p+tb+'</table></div></div>'}
+// ── Transit Leaderboard ──
+var _trData=null,_trFrom='',_trTo='';
+function _rTransit(el,tabs){
+var now=new Date(),y=now.getFullYear(),m=now.getMonth();
+var dFrom=_trFrom||y+'-'+(m+1<10?'0':'')+(m+1)+'-01';
+var dTo=_trTo||y+'-'+(m+1<10?'0':'')+(m+1)+'-'+(now.getDate()<10?'0':'')+now.getDate();
+el.innerHTML=tabs+'<div style="margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><input type="date" id="trFrom" value="'+dFrom+'" onchange="_trFrom=this.value"><span>—</span><input type="date" id="trTo" value="'+dTo+'" onchange="_trTo=this.value"><button class="tb" onclick="_loadTransit()">Загрузить</button></div><div id="trBody"><div class="em">⏳ Загрузка данных транзита...</div></div>';
+_loadTransit();
+}
+function _loadTransit(){
+var fr=document.getElementById('trFrom'),to=document.getElementById('trTo');
+if(!fr||!to)return;
+var fromV=fr.value,toV=to.value;
+if(!fromV||!toV){document.getElementById('trBody').innerHTML='<div class="em">Укажите даты</div>';return}
+_trFrom=fromV;_trTo=toV;
+document.getElementById('trBody').innerHTML='<div class="em">⏳ Загрузка...</div>';
+google.script.run.withSuccessHandler(function(data){
+_trData=data;_buildTransit();
+}).withFailureHandler(function(e){
+document.getElementById('trBody').innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>';
+}).getTransitData(fromV,toV);
+}
+function _buildTransit(){
+var el=document.getElementById('trBody');if(!el||!_trData)return;
+var emp=_trData.employees||[];
+if(!emp.length){el.innerHTML='<div class="em">Нет данных за выбранный период</div>';return}
+var totS=0,totD=0,totA=0,totT=0;
+emp.forEach(function(e){totT+=e.total;totS+=e.success;totD+=e.declined;totA+=e.success_amt});
+var avgCr=totT?(totS/totT*100):0;
+var h='<div class="kg"><div class="kc"><div class="kl">👥 Менеджеров</div><div class="kv bl">'+emp.length+'</div></div>';
+h+='<div class="kc"><div class="kl">📦 Всего заявок</div><div class="kv">'+f(totT)+'</div></div>';
+h+='<div class="kc"><div class="kl">✅ Успешных</div><div class="kv g">'+f(totS)+'</div></div>';
+h+='<div class="kc"><div class="kl">❌ Отклонённых</div><div class="kv r">'+f(totD)+'</div></div>';
+h+='<div class="kc"><div class="kl">📊 CR</div><div class="kv '+(avgCr>=70?'g':avgCr>=50?'y':'r')+'">'+fp(avgCr)+'</div></div>';
+h+='<div class="kc"><div class="kl">💰 Объём</div><div class="kv g">'+f(totA)+' ₴</div></div></div>';
+var me=['🥇','🥈','🥉'],mc=['#FBBF24','#94a3b8','#cd7f32'];
+h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:20px">';
+emp.slice(0,3).forEach(function(d,i){
+h+='<div style="background:rgba(26,27,38,.88);border:1.5px solid '+mc[i]+';border-radius:14px;padding:16px">';
+h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:26px">'+me[i]+'</span></div>';
+h+='<div style="font-size:15px;font-weight:700;margin-bottom:10px">'+d.name+'</div>';
+h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+h+='<div style="background:var(--bg3);border-radius:6px;padding:6px;text-align:center"><div style="font-size:8px;color:var(--text2)">Объём</div><div style="font-size:14px;font-weight:700;color:var(--green)">'+f(d.success_amt)+'</div></div>';
+h+='<div style="background:var(--bg3);border-radius:6px;padding:6px;text-align:center"><div style="font-size:8px;color:var(--text2)">CR</div><div style="font-size:14px;font-weight:700;color:'+(d.cr>=70?'var(--green)':d.cr>=50?'var(--yellow)':'var(--red)')+'">'+fp(d.cr)+'</div></div>';
+h+='</div></div>'});
+h+='</div>';
+var mx=emp[0].success_amt||1;
+h+='<div class="sc"><h3><span class="d"></span>Рейтинг транзит</h3><div class="tw"><table class="t"><tr><th>#</th><th>Менеджер</th><th>Всего</th><th>Успех</th><th>Отклон.</th><th>CR</th><th>Объём ₴</th><th>BA</th>';
+h+='<th>Аут кол.</th><th>Аут сумма</th>';
+h+='<th>3DS сек</th></tr>';
+emp.forEach(function(d,i){
+var w=Math.round(d.success_amt/mx*100);
+h+='<tr><td style="font-weight:700;color:'+(i<3?mc[i]:'var(--text2)')+';">'+(me[i]||i+1)+'</td>';
+h+='<td><b>'+d.name+'</b></td>';
+h+='<td>'+d.total+'</td>';
+h+='<td style="color:var(--green)">'+d.success+'</td>';
+h+='<td style="color:var(--red)">'+d.declined+'</td>';
+h+='<td><span class="bd '+(d.cr>=70?'bg':d.cr>=50?'by':'br')+'">'+fp(d.cr)+'</span></td>';
+h+='<td><div class="pg"><div class="pt"><div class="pf" style="width:'+w+'%;background:var(--green)"></div></div><span>'+f(d.success_amt)+'</span></div></td>';
+h+='<td>'+d.ba_count+'</td>';
+h+='<td>'+(d.out_cnt||'—')+'</td>';
+h+='<td style="color:var(--yellow)">'+(d.out_amt?f(d.out_amt):'—')+'</td>';
+h+='<td>'+(d.avg_3ds!=null?Math.round(d.avg_3ds)+'с':'—')+'</td>';
+h+='</tr>'});
+h+='</table></div></div>';
+if(_trData.updated){h+='<div style="text-align:right;font-size:10px;color:var(--text2);margin-top:8px">EOG обновлено: '+_trData.updated+'</div>'}
+el.innerHTML=h;
+}
 function rMgrs(el){if(!R.length){el.innerHTML='<div class="em">Нет данных</div>';return}var md=bmd(R),onC=0;md.forEach(function(d){if(_isOnline(d.m))onC++});var h='<div class="sc"><h3><span class="d"></span>Команда ('+md.length+') · <span style="color:var(--green)">'+onC+' онлайн</span></h3><div class="tw"><table class="t"><tr><th>Менеджер</th><th>Карт</th><th>Объём</th><th>%бл.</th></tr>';md.forEach(function(d){h+='<tr><td><span class="on '+(_isOnline(d.m)?'g':'off')+'"></span><b>'+d.m+'</b></td><td>'+d.c+'</td><td style="color:var(--green);font-weight:600">'+f(d.o)+'</td><td><span class="bd '+(d.bp<5?'bg':d.bp<10?'by':'br')+'">'+fp(d.bp)+'</span></td></tr>'});el.innerHTML=h+'</table></div></div>'}
 var _fineTab='mgr_fines';
 function _fineTabBtn(id,label){return'<button class="tb" onclick="_fineTab=\''+id+'\';rFines(document.getElementById(\'va\'))" style="'+(_fineTab===id?'background:var(--accent);color:#fff;border-color:var(--accent)':'')+'">'+label+'</button>'}
