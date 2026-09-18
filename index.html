@@ -172,7 +172,7 @@ var google={script:{run:{
 // ══ CRM STATE (populated by whoami) ══
 var C=null,U=null,D=null,R=[],sec='dashboard',aSub='volume',ch={};
 var PAL=['#E8566D','#4ADE80','#FBBF24','#60A5FA','#F59E0B','#A78BFA','#86EFAC','#EC4899','#2DD4BF','#D97706','#C084FC','#5EEAD4'];
-var ASUBS=[{id:'volume',icon:'💰',label:'Объём'},{id:'blocks',icon:'🛡️',label:'Блоки'},{id:'dorabotka',icon:'🔧',label:'Доработка Нал'},{id:'mgrs',icon:'👥',label:'Менеджеры'},{id:'cardlife',icon:'💳',label:'Жизнь карты'},{id:'dynamics',icon:'📈',label:'Динамика'},{id:'heatmap',icon:'🔥',label:'Тепловые карты'},{id:'profile',icon:'🎯',label:'Профиль'},{id:'patterns',icon:'🔍',label:'Паттерны'},{id:'topmgrs',icon:'🏆',label:'Топ менеджеров'}];
+var ASUBS=[{id:'volume',icon:'💰',label:'Объём'},{id:'blocks',icon:'🛡️',label:'Блоки'},{id:'dorabotka',icon:'🔧',label:'Доработка Нал'},{id:'mgrs',icon:'👥',label:'Менеджеры'},{id:'cardlife',icon:'💳',label:'Жизнь карты'},{id:'dynamics',icon:'📈',label:'Динамика'},{id:'heatmap',icon:'🔥',label:'Тепловые карты'},{id:'profile',icon:'🎯',label:'Профиль'},{id:'patterns',icon:'🔍',label:'Паттерны'},{id:'topmgrs',icon:'🏆',label:'Топ менеджеров'},{id:'transit',icon:'🔄',label:'Транзит'}];
 function f(n){return Math.round(n).toLocaleString('uk-UA')}
 function fp(n){return(+(n)||0).toFixed(1)+'%'}
 function ts(m,e){var t=document.getElementById('toast');t.textContent=m;t.style.background=e?'var(--red)':'var(--green)';t.style.display='block';setTimeout(function(){t.style.display='none'},3e3)}
@@ -245,7 +245,7 @@ function go(s){sec=s;document.querySelectorAll('.ni').forEach(function(el){el.cl
 function rA(){var el=document.getElementById('va');el.scrollTop=0;if(!R.length){el.innerHTML='<div class="em">Нет данных</div>';return}
 var h='<div class="sc" style="padding:12px 16px"><div class="fr" style="margin-bottom:0"><div class="fg"><label>Банк</label><select id="aB" onchange="rAC()"><option value="">Все</option>';uq(R.map(function(r){return r.bank})).forEach(function(b){h+='<option>'+b+'</option>'});h+='</select></div><div class="fg"><label>Метод</label><select id="aM" onchange="rAC()"><option value="">Все</option>';uq(R.map(function(r){return r.method})).forEach(function(m){h+='<option>'+m+'</option>'});h+='</select></div><div class="fg"><label>Менеджер</label><select id="aG" onchange="rAC()"><option value="">Все</option>';uq(R.map(function(r){return r.manager})).forEach(function(m){h+='<option>'+m+'</option>'});h+='</select></div></div><div class="fr" style="margin-bottom:0;margin-top:8px"><div class="fg"><label>Статус</label><select id="aSt" onchange="rAC()"><option value="">Все</option>';uq(R.map(function(r){return r.state})).forEach(function(s){if(s)h+='<option>'+s+'</option>'});h+='</select></div><div class="fg"><label>Возраст от</label><input type="number" id="aAgF" min="0" max="99" placeholder="—" onchange="rAC()" style="width:70px"></div><div class="fg"><label>до</label><input type="number" id="aAgT" min="0" max="99" placeholder="—" onchange="rAC()" style="width:70px"></div><div class="fg"><label>Тип блока</label><select id="aVb" onchange="rAC()"><option value="">Все</option>';uq(R.map(function(r){return r.vid_bloka})).forEach(function(v){if(v)h+='<option>'+v+'</option>'});h+='</select></div></div></div><div id="aC"></div>';el.innerHTML=h;var saf=localStorage.getItem('crm_age_from'),sat=localStorage.getItem('crm_age_to');if(saf){var ef=document.getElementById('aAgF');if(ef)ef.value=saf}if(sat){var et=document.getElementById('aAgT');if(et)et.value=sat}rAC()}
 function gAR(){var b=document.getElementById('aB'),m=document.getElementById('aM'),g=document.getElementById('aG'),st=document.getElementById('aSt'),agF=document.getElementById('aAgF'),agT=document.getElementById('aAgT'),vb=document.getElementById('aVb');var bv=b?b.value:'',mv=m?m.value:'',gv=g?g.value:'',sv=st?st.value:'',afv=agF?agF.value:'',atv=agT?agT.value:'',vbv=vb?vb.value:'';return R.filter(function(r){if(bv&&r.bank!==bv)return false;if(mv&&r.method!==mv)return false;if(gv&&r.manager!==gv)return false;if(sv&&r.state!==sv)return false;if(vbv&&r.vid_bloka!==vbv)return false;if(afv&&r.age<+afv)return false;if(atv&&r.age>+atv)return false;return true})}
-function rAC(){var rows=gAR(),el=document.getElementById('aC');if(!el)return;if(!rows.length){el.innerHTML='<div class="em">Нет данных</div>';return}({volume:aVol,blocks:aBlk,dorabotka:aDor,mgrs:aMgr,cardlife:aCL,dynamics:aDyn,heatmap:aHeat,profile:aPro,patterns:aPat,topmgrs:aTop}[aSub]||function(e){e.innerHTML='<div class="em">В разработке</div>'})(el,rows)}
+function rAC(){var rows=gAR(),el=document.getElementById('aC');if(!el)return;if(!rows.length){el.innerHTML='<div class="em">Нет данных</div>';return}if(aSub==='transit'){aTrans(el);return}({volume:aVol,blocks:aBlk,dorabotka:aDor,mgrs:aMgr,cardlife:aCL,dynamics:aDyn,heatmap:aHeat,profile:aPro,patterns:aPat,topmgrs:aTop}[aSub]||function(e){e.innerHTML='<div class="em">В разработке</div>'})(el,rows)}
 
 // ═══ ОБЪЁМ ═══
 function aVol(el,r){var to=r.reduce(function(a,x){return a+x.obj},0),md=bmd(r),bB={},bM={};r.forEach(function(x){bB[x.bank]=(bB[x.bank]||0)+x.obj;bM[x.method]=(bM[x.method]||0)+x.obj});
@@ -478,8 +478,137 @@ var t='';md.forEach(function(d,i){t+='<tr><td style="font-weight:700">'+(me[i]||
 el.innerHTML='<div class="sc"><h3><span class="d"></span>Топ менеджеров</h3><div class="tw"><table class="t"><tr><th>#</th><th>Менеджер</th><th>Карт</th><th>Объём</th><th>Ср.пр.</th><th>%блока</th></tr>'+t+'</table></div></div><div class="sc"><h3><span class="d"></span>Визуализация</h3><canvas id="tm1" style="max-height:280px"></canvas></div>';
 mkChart('tm1','bar',md.map(function(d){return d.m}),[{data:md.map(function(d){return d.o}),backgroundColor:md.map(function(d,i){return i<3?['#FBBF24','#94a3b8','#cd7f32'][i]:PAL[i%PAL.length]+'88'}),borderRadius:5,borderSkipped:false}])}
 
+// ═══ АНАЛИТИКА ТРАНЗИТ ═══
+var _atData=null;
+function aTrans(el){
+var from=document.getElementById('dFrom').value,to=document.getElementById('dTo').value;
+el.innerHTML='<div class="em">⏳ Загрузка данных транзита...</div>';
+google.script.run.withSuccessHandler(function(data){
+_atData=data;_buildATrans(el);
+}).withFailureHandler(function(e){
+el.innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>';
+}).getTransitData(from,to);
+}
+function _buildATrans(el){
+if(!_atData||!_atData.employees||!_atData.employees.length){el.innerHTML='<div class="em">Нет данных</div>';return}
+var emp=_atData.employees,totT=0,totS=0,totD=0,totSA=0,totTA=0,totOut=0,totOutA=0,tot3ds=0,n3ds=0,totBA=0;
+emp.forEach(function(e){totT+=e.total;totS+=e.success;totD+=e.declined;totSA+=e.success_amt;totTA+=e.total_amt;totOut+=e.out_cnt||0;totOutA+=e.out_amt||0;if(e.avg_3ds!=null){tot3ds+=e.avg_3ds*(e.success||1);n3ds+=e.success||1}totBA+=e.ba_count||0});
+var avgCr=totT?(totS/totT*100):0,avg3ds=n3ds?(tot3ds/n3ds):0,avgPerMgr=emp.length?(totSA/emp.length):0;
+var h='';
+// KPI cards
+h+='<div class="kg"><div class="kc"><div class="kl">👥 Менеджеров</div><div class="kv bl">'+emp.length+'</div></div>';
+h+='<div class="kc"><div class="kl">📦 Всего заявок</div><div class="kv">'+f(totT)+'</div></div>';
+h+='<div class="kc"><div class="kl">✅ Успешных</div><div class="kv g">'+f(totS)+'</div></div>';
+h+='<div class="kc"><div class="kl">❌ Отклонённых</div><div class="kv r">'+f(totD)+'</div></div>';
+h+='<div class="kc"><div class="kl">📊 CR</div><div class="kv '+(avgCr>=70?'g':avgCr>=50?'y':'r')+'">'+fp(avgCr)+'</div></div>';
+h+='<div class="kc"><div class="kl">💰 Объём IN</div><div class="kv g">'+f(totSA)+' ₴</div></div>';
+h+='<div class="kc"><div class="kl">💸 Объём OUT</div><div class="kv y">'+f(totOutA)+' ₴</div></div>';
+h+='<div class="kc"><div class="kl">📈 Diff</div><div class="kv '+(totSA-totOutA>0?'g':'r')+'">'+f(totSA-totOutA)+' ₴</div></div>';
+h+='<div class="kc"><div class="kl">⏱ Ср. 3DS</div><div class="kv bl">'+(avg3ds?Math.round(avg3ds)+'с':'—')+'</div></div>';
+h+='<div class="kc"><div class="kl">🏦 BA всего</div><div class="kv">'+totBA+'</div></div>';
+h+='<div class="kc"><div class="kl">💵 Ср/менеджер</div><div class="kv y">'+f(avgPerMgr)+' ₴</div></div>';
+h+='<div class="kc"><div class="kl">📬 Аут кол.</div><div class="kv">'+f(totOut)+'</div></div></div>';
+
+// Charts row 1
+h+='<div class="g3">';
+h+='<div class="sc"><h3><span class="d"></span>Топ-10 по объёму</h3><canvas id="at1" style="max-height:240px"></canvas></div>';
+h+='<div class="sc"><h3><span class="d"></span>CR по менеджерам</h3><canvas id="at2" style="max-height:240px"></canvas></div>';
+h+='<div class="sc"><h3><span class="d"></span>IN vs OUT</h3><canvas id="at3" style="max-height:240px"></canvas></div></div>';
+
+// Charts row 2
+h+='<div class="g3">';
+h+='<div class="sc"><h3><span class="d"></span>Распределение CR</h3><canvas id="at4" style="max-height:220px"></canvas></div>';
+h+='<div class="sc"><h3><span class="d"></span>3DS по менеджерам</h3><canvas id="at5" style="max-height:220px"></canvas></div>';
+h+='<div class="sc"><h3><span class="d"></span>BA по менеджерам</h3><canvas id="at6" style="max-height:220px"></canvas></div></div>';
+
+// Full table
+var mx=emp[0].success_amt||1,me=['🥇','🥈','🥉'],mc=['#FBBF24','#94a3b8','#cd7f32'];
+h+='<div class="sc"><h3><span class="d"></span>Полная таблица</h3><div class="tw"><table class="t"><tr><th>#</th><th>Менеджер</th><th>Всего</th><th>Успех</th><th>Откл.</th><th>CR</th><th>Объём IN</th><th>Объём OUT</th><th>Diff</th><th>BA</th><th>3DS</th><th>Аут кол.</th><th>Ср.чек</th></tr>';
+emp.forEach(function(d,i){
+var w=Math.round(d.success_amt/mx*100),diff=d.success_amt-(d.out_amt||0),avgChk=d.success?Math.round(d.success_amt/d.success):0;
+h+='<tr><td style="font-weight:700;color:'+(i<3?mc[i]:'var(--text2)')+';">'+(me[i]||i+1)+'</td>';
+h+='<td><b>'+d.name+'</b></td>';
+h+='<td>'+d.total+'</td>';
+h+='<td style="color:var(--green)">'+d.success+'</td>';
+h+='<td style="color:var(--red)">'+d.declined+'</td>';
+h+='<td><span class="bd '+(d.cr>=70?'bg':d.cr>=50?'by':'br')+'">'+fp(d.cr)+'</span></td>';
+h+='<td><div class="pg"><div class="pt"><div class="pf" style="width:'+w+'%;background:var(--green)"></div></div><span>'+f(d.success_amt)+'</span></div></td>';
+h+='<td style="color:var(--yellow)">'+(d.out_amt?f(d.out_amt):'—')+'</td>';
+h+='<td style="color:'+(diff>0?'var(--green)':'var(--red)')+'">'+f(diff)+'</td>';
+h+='<td>'+d.ba_count+'</td>';
+h+='<td>'+(d.avg_3ds!=null?Math.round(d.avg_3ds)+'с':'—')+'</td>';
+h+='<td>'+(d.out_cnt||'—')+'</td>';
+h+='<td style="color:var(--text2)">'+f(avgChk)+'</td>';
+h+='</tr>'});
+h+='</table></div></div>';
+if(_atData.updated){h+='<div style="text-align:right;font-size:10px;color:var(--text2);margin-top:8px">EOG обновлено: '+_atData.updated+'</div>'}
+el.innerHTML=h;
+
+// Build charts
+var top10=emp.slice(0,10);
+mkChart('at1','bar',top10.map(function(d){return d.name}),[{label:'Объём ₴',data:top10.map(function(d){return d.success_amt}),backgroundColor:top10.map(function(d,i){return i<3?['#FBBF24','#94a3b8','#cd7f32'][i]:PAL[i%PAL.length]+'88'}),borderRadius:5,borderSkipped:false}]);
+
+var crSorted=emp.slice().sort(function(a,b){return b.cr-a.cr}).slice(0,15);
+mkChart('at2','bar',crSorted.map(function(d){return d.name}),[{label:'CR %',data:crSorted.map(function(d){return d.cr}),backgroundColor:crSorted.map(function(d){return d.cr>=70?'rgba(74,222,128,.7)':d.cr>=50?'rgba(251,191,36,.7)':'rgba(248,113,113,.7)'}),borderRadius:5,borderSkipped:false}],{scales:{y:{beginAtZero:true,max:100}}});
+
+var top10io=emp.slice(0,10);
+mkChart('at3','bar',top10io.map(function(d){return d.name}),[{label:'IN ₴',data:top10io.map(function(d){return d.success_amt}),backgroundColor:'rgba(74,222,128,.7)',borderRadius:5,borderSkipped:false},{label:'OUT ₴',data:top10io.map(function(d){return d.out_amt||0}),backgroundColor:'rgba(251,191,36,.7)',borderRadius:5,borderSkipped:false}]);
+
+var crBuckets=[0,0,0,0,0];
+emp.forEach(function(d){var c=d.cr;if(c>=80)crBuckets[0]++;else if(c>=70)crBuckets[1]++;else if(c>=60)crBuckets[2]++;else if(c>=50)crBuckets[3]++;else crBuckets[4]++});
+mkChart('at4','doughnut',['80%+','70-80%','60-70%','50-60%','<50%'],[{data:crBuckets,backgroundColor:['#4ADE80','#86EFAC','#FBBF24','#F59E0B','#F87171']}],po());
+
+var tdsSorted=emp.filter(function(d){return d.avg_3ds!=null}).sort(function(a,b){return a.avg_3ds-b.avg_3ds}).slice(0,15);
+if(tdsSorted.length){
+mkChart('at5','bar',tdsSorted.map(function(d){return d.name}),[{label:'3DS сек',data:tdsSorted.map(function(d){return Math.round(d.avg_3ds)}),backgroundColor:tdsSorted.map(function(d){return d.avg_3ds<=45?'rgba(74,222,128,.7)':d.avg_3ds<=90?'rgba(251,191,36,.7)':'rgba(248,113,113,.7)'}),borderRadius:5,borderSkipped:false}]);}
+
+var baSorted=emp.slice().sort(function(a,b){return b.ba_count-a.ba_count}).slice(0,15);
+mkChart('at6','bar',baSorted.map(function(d){return d.name}),[{label:'BA',data:baSorted.map(function(d){return d.ba_count}),backgroundColor:'rgba(96,165,250,.7)',borderRadius:5,borderSkipped:false}]);
+}
+
 // ═══ ДАШБОРД ═══
-function rDash(el){if(!R.length){el.innerHTML='<div class="em">Нет данных</div>';return}var to=R.reduce(function(a,r){return a+r.obj},0),tb=R.filter(function(r){return r.blok>0}).reduce(function(a,r){return a+r.blok},0),bp=to?tb/to*100:0,mg=uq(R.map(function(r){return r.manager})),md=bmd(R),me=['🥇','🥈','🥉'];var bB={},bM={};R.forEach(function(r){bB[r.bank]=(bB[r.bank]||0)+r.obj;bM[r.method]=(bM[r.method]||0)+r.obj});var bD={};R.forEach(function(r){if(!bD[r.date])bD[r.date]={o:0,c:0,b:0};bD[r.date].o+=r.obj;bD[r.date].c++;bD[r.date].b+=r.blok});var dates=Object.keys(bD).sort(function(a,b){return parseD(a)-parseD(b)});var hr=new Date().getHours(),greet=hr<12?'Доброе утро':hr<18?'Добрый день':'Добрый вечер';var h='<div style="margin-bottom:20px"><h2 style="font-size:22px;font-weight:700;margin-bottom:4px">'+greet+', <span style="color:var(--accent)">'+U.name+'</span>!</h2><div style="font-size:12px;color:var(--text2)">Период: '+dl()+' · Обновлено: '+(D.updated_at||'—')+'</div></div>';h+='<div class="kg"><div class="kc"><div class="kl">👥 Менеджеров</div><div class="kv bl">'+mg.length+'</div></div><div class="kc"><div class="kl">📦 Карт</div><div class="kv">'+f(R.length)+'</div></div><div class="kc"><div class="kl">💰 Объём</div><div class="kv g">'+f(to)+' ₴</div></div><div class="kc"><div class="kl">📊 Ср.прох.</div><div class="kv y">'+f(R.length?to/R.length:0)+' ₴</div></div><div class="kc"><div class="kl">🛡️ %блока</div><div class="kv '+(bp<10?'g':'r')+'">'+fp(bp)+'</div></div><div class="kc"><div class="kl">🛡️ Блок</div><div class="kv r">'+f(tb)+' ₴</div></div></div>';h+='<div class="sc"><h3><span class="d"></span>Динамика объёма и блоков</h3><canvas id="db4" style="max-height:240px"></canvas></div>';h+='<div class="g3"><div class="sc"><h3><span class="d"></span>По банкам</h3><canvas id="db1" style="max-height:200px"></canvas></div><div class="sc"><h3><span class="d"></span>По методам</h3><canvas id="db2" style="max-height:200px"></canvas></div><div class="sc"><h3><span class="d"></span>Топ-5 объём</h3><canvas id="db3" style="max-height:200px"></canvas></div></div>';var t='<div class="tw"><table class="t"><tr><th>#</th><th>Менеджер</th><th>Карт</th><th>Объём</th><th>%блока</th></tr>';md.slice(0,5).forEach(function(d,i){t+='<tr><td style="font-weight:700">'+(me[i]||i+1)+'</td><td><b>'+d.m+'</b></td><td>'+d.c+'</td><td style="color:var(--green);font-weight:600">'+f(d.o)+'</td><td><span class="bd '+(d.bp<5?'bg':d.bp<10?'by':'br')+'">'+fp(d.bp)+'</span></td></tr>'});h+='<div class="sc"><h3><span class="d"></span>Топ-5</h3>'+t+'</table></div></div>';el.innerHTML=h;var bk=Object.keys(bB);mkChart('db1','doughnut',bk,[{data:bk.map(function(k){return bB[k]}),backgroundColor:bk.map(function(k,i){return PAL[i]})}],po());var mk=Object.keys(bM);mkChart('db2','doughnut',mk,[{data:mk.map(function(k){return bM[k]}),backgroundColor:mk.map(function(k,i){return PAL[(i+3)%PAL.length]})}],po());mkChart('db3','bar',md.slice(0,5).map(function(d){return d.m}),[{data:md.slice(0,5).map(function(d){return d.o}),backgroundColor:md.slice(0,5).map(function(d,i){return i<3?['#FBBF24','#94a3b8','#cd7f32'][i]:PAL[i%PAL.length]+'88'}),borderRadius:5,borderSkipped:false}]);mkChart('db4','line',dates,[{label:'Объём ₴',data:dates.map(function(d){return bD[d].o}),borderColor:'#4ADE80',backgroundColor:'rgba(74,222,128,.08)',fill:true,tension:.3,pointRadius:3},{label:'Блоки ₴',data:dates.map(function(d){return bD[d].b}),borderColor:'#F87171',backgroundColor:'rgba(248,113,113,.06)',fill:true,tension:.3,pointRadius:3}],lo())}
+function rDash(el){if(!R.length){el.innerHTML='<div class="em">Нет данных</div>';return}var to=R.reduce(function(a,r){return a+r.obj},0),tb=R.filter(function(r){return r.blok>0}).reduce(function(a,r){return a+r.blok},0),bp=to?tb/to*100:0,mg=uq(R.map(function(r){return r.manager})),md=bmd(R),me=['🥇','🥈','🥉'];var bB={},bM={};R.forEach(function(r){bB[r.bank]=(bB[r.bank]||0)+r.obj;bM[r.method]=(bM[r.method]||0)+r.obj});var bD={};R.forEach(function(r){if(!bD[r.date])bD[r.date]={o:0,c:0,b:0};bD[r.date].o+=r.obj;bD[r.date].c++;bD[r.date].b+=r.blok});var dates=Object.keys(bD).sort(function(a,b){return parseD(a)-parseD(b)});var hr=new Date().getHours(),greet=hr<12?'Доброе утро':hr<18?'Добрый день':'Добрый вечер';var h='<div style="margin-bottom:20px"><h2 style="font-size:22px;font-weight:700;margin-bottom:4px">'+greet+', <span style="color:var(--accent)">'+U.name+'</span>!</h2><div style="font-size:12px;color:var(--text2)">Период: '+dl()+' · Обновлено: '+(D.updated_at||'—')+'</div></div>';h+='<div class="kg"><div class="kc"><div class="kl">👥 Менеджеров</div><div class="kv bl">'+mg.length+'</div></div><div class="kc"><div class="kl">📦 Карт</div><div class="kv">'+f(R.length)+'</div></div><div class="kc"><div class="kl">💰 Объём</div><div class="kv g">'+f(to)+' ₴</div></div><div class="kc"><div class="kl">📊 Ср.прох.</div><div class="kv y">'+f(R.length?to/R.length:0)+' ₴</div></div><div class="kc"><div class="kl">🛡️ %блока</div><div class="kv '+(bp<10?'g':'r')+'">'+fp(bp)+'</div></div><div class="kc"><div class="kl">🛡️ Блок</div><div class="kv r">'+f(tb)+' ₴</div></div></div>';h+='<div class="sc"><h3><span class="d"></span>Динамика объёма и блоков</h3><canvas id="db4" style="max-height:240px"></canvas></div>';h+='<div class="g3"><div class="sc"><h3><span class="d"></span>По банкам</h3><canvas id="db1" style="max-height:200px"></canvas></div><div class="sc"><h3><span class="d"></span>По методам</h3><canvas id="db2" style="max-height:200px"></canvas></div><div class="sc"><h3><span class="d"></span>Топ-5 объём</h3><canvas id="db3" style="max-height:200px"></canvas></div></div>';var t='<div class="tw"><table class="t"><tr><th>#</th><th>Менеджер</th><th>Карт</th><th>Объём</th><th>%блока</th></tr>';md.slice(0,5).forEach(function(d,i){t+='<tr><td style="font-weight:700">'+(me[i]||i+1)+'</td><td><b>'+d.m+'</b></td><td>'+d.c+'</td><td style="color:var(--green);font-weight:600">'+f(d.o)+'</td><td><span class="bd '+(d.bp<5?'bg':d.bp<10?'by':'br')+'">'+fp(d.bp)+'</span></td></tr>'});h+='<div class="sc"><h3><span class="d"></span>Топ-5</h3>'+t+'</table></div></div>';el.innerHTML=h;var bk=Object.keys(bB);mkChart('db1','doughnut',bk,[{data:bk.map(function(k){return bB[k]}),backgroundColor:bk.map(function(k,i){return PAL[i]})}],po());var mk=Object.keys(bM);mkChart('db2','doughnut',mk,[{data:mk.map(function(k){return bM[k]}),backgroundColor:mk.map(function(k,i){return PAL[(i+3)%PAL.length]})}],po());mkChart('db3','bar',md.slice(0,5).map(function(d){return d.m}),[{data:md.slice(0,5).map(function(d){return d.o}),backgroundColor:md.slice(0,5).map(function(d,i){return i<3?['#FBBF24','#94a3b8','#cd7f32'][i]:PAL[i%PAL.length]+'88'}),borderRadius:5,borderSkipped:false}]);mkChart('db4','line',dates,[{label:'Объём ₴',data:dates.map(function(d){return bD[d].o}),borderColor:'#4ADE80',backgroundColor:'rgba(74,222,128,.08)',fill:true,tension:.3,pointRadius:3},{label:'Блоки ₴',data:dates.map(function(d){return bD[d].b}),borderColor:'#F87171',backgroundColor:'rgba(248,113,113,.06)',fill:true,tension:.3,pointRadius:3}],lo());
+_loadDashTransit()}
+function _loadDashTransit(){
+var from=document.getElementById('dFrom').value,to=document.getElementById('dTo').value;
+var ct=document.getElementById('va');if(!ct)return;
+var wrap=document.createElement('div');wrap.id='dashTr';wrap.innerHTML='<div class="sc" style="margin-top:20px"><h3><span class="d"></span>🔄 Транзит</h3><div class="em">⏳ Загрузка транзита...</div></div>';
+ct.appendChild(wrap);
+google.script.run.withSuccessHandler(function(data){
+var w=document.getElementById('dashTr');if(!w)return;
+if(!data||!data.employees||!data.employees.length){w.innerHTML='<div class="sc" style="margin-top:20px"><h3><span class="d"></span>🔄 Транзит</h3><div class="em">Нет данных транзита</div></div>';return}
+var emp=data.employees,totT=0,totS=0,totD=0,totSA=0,totOutA=0;
+emp.forEach(function(e){totT+=e.total;totS+=e.success;totD+=e.declined;totSA+=e.success_amt;totOutA+=e.out_amt||0});
+var avgCr=totT?(totS/totT*100):0;
+var h='<div class="sc" style="margin-top:20px"><h3><span class="d"></span>🔄 Транзит</h3>';
+h+='<div class="kg" style="margin-bottom:16px"><div class="kc"><div class="kl">👥 Менеджеров</div><div class="kv bl">'+emp.length+'</div></div>';
+h+='<div class="kc"><div class="kl">📦 Заявок</div><div class="kv">'+f(totT)+'</div></div>';
+h+='<div class="kc"><div class="kl">✅ Успех</div><div class="kv g">'+f(totS)+'</div></div>';
+h+='<div class="kc"><div class="kl">❌ Откл.</div><div class="kv r">'+f(totD)+'</div></div>';
+h+='<div class="kc"><div class="kl">📊 CR</div><div class="kv '+(avgCr>=70?'g':avgCr>=50?'y':'r')+'">'+fp(avgCr)+'</div></div>';
+h+='<div class="kc"><div class="kl">💰 IN</div><div class="kv g">'+f(totSA)+' ₴</div></div>';
+h+='<div class="kc"><div class="kl">💸 OUT</div><div class="kv y">'+f(totOutA)+' ₴</div></div>';
+h+='<div class="kc"><div class="kl">📈 Diff</div><div class="kv '+(totSA-totOutA>0?'g':'r')+'">'+f(totSA-totOutA)+' ₴</div></div></div>';
+h+='<div class="g3" style="margin-bottom:16px"><div class="sc"><h3 style="font-size:13px"><span class="d"></span>Топ-5 объём</h3><canvas id="dtr1" style="max-height:180px"></canvas></div>';
+h+='<div class="sc"><h3 style="font-size:13px"><span class="d"></span>IN vs OUT</h3><canvas id="dtr2" style="max-height:180px"></canvas></div>';
+h+='<div class="sc"><h3 style="font-size:13px"><span class="d"></span>CR Топ-5</h3><canvas id="dtr3" style="max-height:180px"></canvas></div></div>';
+var me2=['🥇','🥈','🥉'],mc2=['#FBBF24','#94a3b8','#cd7f32'];
+h+='<div class="tw"><table class="t"><tr><th>#</th><th>Менеджер</th><th>Заявок</th><th>Успех</th><th>CR</th><th>Объём</th><th>OUT</th></tr>';
+emp.slice(0,10).forEach(function(d,i){
+h+='<tr><td style="font-weight:700;color:'+(i<3?mc2[i]:'var(--text2)')+';">'+(me2[i]||i+1)+'</td><td><b>'+d.name+'</b></td><td>'+d.total+'</td><td style="color:var(--green)">'+d.success+'</td><td><span class="bd '+(d.cr>=70?'bg':d.cr>=50?'by':'br')+'">'+fp(d.cr)+'</span></td><td style="color:var(--green);font-weight:600">'+f(d.success_amt)+'</td><td style="color:var(--yellow)">'+(d.out_amt?f(d.out_amt):'—')+'</td></tr>'});
+h+='</table></div>';
+if(data.updated)h+='<div style="text-align:right;font-size:10px;color:var(--text2);margin-top:6px">EOG: '+data.updated+'</div>';
+h+='</div>';
+w.innerHTML=h;
+var top5=emp.slice(0,5);
+mkChart('dtr1','bar',top5.map(function(d){return d.name}),[{data:top5.map(function(d){return d.success_amt}),backgroundColor:top5.map(function(d,i){return i<3?['#FBBF24','#94a3b8','#cd7f32'][i]:PAL[i%PAL.length]+'88'}),borderRadius:5,borderSkipped:false}]);
+mkChart('dtr2','bar',top5.map(function(d){return d.name}),[{label:'IN',data:top5.map(function(d){return d.success_amt}),backgroundColor:'rgba(74,222,128,.7)',borderRadius:5,borderSkipped:false},{label:'OUT',data:top5.map(function(d){return d.out_amt||0}),backgroundColor:'rgba(251,191,36,.7)',borderRadius:5,borderSkipped:false}]);
+var crTop=emp.slice().sort(function(a,b){return b.cr-a.cr}).slice(0,5);
+mkChart('dtr3','bar',crTop.map(function(d){return d.name}),[{data:crTop.map(function(d){return d.cr}),backgroundColor:crTop.map(function(d){return d.cr>=70?'rgba(74,222,128,.7)':d.cr>=50?'rgba(251,191,36,.7)':'rgba(248,113,113,.7)'}),borderRadius:5,borderSkipped:false}],{scales:{y:{beginAtZero:true,max:100}}});
+}).withFailureHandler(function(e){
+var w=document.getElementById('dashTr');if(w)w.innerHTML='<div class="sc" style="margin-top:20px"><h3><span class="d"></span>🔄 Транзит</h3><div class="em" style="color:var(--red)">'+e.message+'</div></div>';
+}).getTransitData(from,to);
+}
 
 // ═══ ЛИДЕРБОРД ═══
 function _greet(){var h=new Date().getHours();return h<12?'Доброе утро':h<18?'Добрый день':'Добрый вечер'}
@@ -523,18 +652,26 @@ return h+'</div>';
 }
 var _leadTab='manual';
 function rLead(el){
-var tabs='<div style="display:flex;gap:8px;margin-bottom:16px"><button class="tb" id="ltManual" onclick="_leadTab=\'manual\';rLead(document.getElementById(\'va\'))" style="'+ (_leadTab==='manual'?'background:var(--accent);color:#fff;border-color:var(--accent)':'') +'">Manual</button><button class="tb" id="ltTransit" onclick="_leadTab=\'transit\';rLead(document.getElementById(\'va\'))" style="'+ (_leadTab==='transit'?'background:var(--accent);color:#fff;border-color:var(--accent)':'') +'">Транзит</button><button class="tb" id="ltOvertime" onclick="_leadTab=\'overtime\';rLead(document.getElementById(\'va\'))" style="'+ (_leadTab==='overtime'?'background:var(--accent);color:#fff;border-color:var(--accent)':'') +'">Переработки</button></div>';
+var tabs='<div style="display:flex;gap:8px;margin-bottom:16px"><button class="tb" id="ltManual" onclick="if(_trTimer){clearInterval(_trTimer);_trTimer=null}_leadTab=\'manual\';rLead(document.getElementById(\'va\'))" style="'+ (_leadTab==='manual'?'background:var(--accent);color:#fff;border-color:var(--accent)':'') +'">Manual</button><button class="tb" id="ltTransit" onclick="_leadTab=\'transit\';rLead(document.getElementById(\'va\'))" style="'+ (_leadTab==='transit'?'background:var(--accent);color:#fff;border-color:var(--accent)':'') +'">Транзит</button><button class="tb" id="ltOvertime" onclick="if(_trTimer){clearInterval(_trTimer);_trTimer=null}_leadTab=\'overtime\';rLead(document.getElementById(\'va\'))" style="'+ (_leadTab==='overtime'?'background:var(--accent);color:#fff;border-color:var(--accent)':'') +'">Переработки</button></div>';
 if(_leadTab==='transit'){_rTransit(el,tabs);return}
 if(_leadTab==='overtime'){el.innerHTML=tabs+'<div style="text-align:center;margin-bottom:16px"><span style="font-size:14px;font-weight:600;color:var(--text2)">'+_monthLabel(_curMonth())+'</span></div><div id="otBody"><div class="em">⏳</div></div>';google.script.run.withSuccessHandler(function(rows){var ob=document.getElementById('otBody');if(!rows||!rows.length){ob.innerHTML='<div class="em">Нет переработок за этот период</div>';return}var sorted=rows.filter(function(r){return r.hours>0});if(!sorted.length){ob.innerHTML='<div class="em">Нет переработок за этот период</div>';return}var me=['🥇','🥈','🥉'],bu=[100,50,50],mc=['#FBBF24','#94a3b8','#cd7f32'];var p='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:20px">';sorted.slice(0,3).forEach(function(d,i){p+='<div style="background:rgba(26,27,38,.88);border:1.5px solid '+mc[i]+';border-radius:14px;padding:16px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:26px">'+me[i]+'</span><span class="bd ba" style="font-weight:700">$'+bu[i]+'</span></div><div style="font-size:15px;font-weight:700;margin-bottom:10px">'+d.name+'</div><div style="background:var(--bg3);border-radius:6px;padding:10px;text-align:center"><div style="font-size:9px;color:var(--text2)">Доп. часы</div><div style="font-size:22px;font-weight:700;color:var(--yellow)">'+d.hours+'</div></div></div>'});p+='</div>';var mx=sorted[0].hours,tb='<div class="sc"><h3><span class="d"></span>Рейтинг переработок</h3><div class="tw"><table class="t"><tr><th>#</th><th>Менеджер</th><th>Доп. часы</th><th>Бонус</th></tr>';sorted.forEach(function(d,i){var w=Math.round(d.hours/mx*100),bonus=i<3?'$'+bu[i]:'—';tb+='<tr><td style="font-weight:700;color:'+(i<3?mc[i]:'var(--text2)')+';">'+(me[i]||i+1)+'</td><td><b>'+d.name+'</b></td><td><div class="pg"><div class="pt"><div class="pf" style="width:'+w+'%;background:var(--yellow)"></div></div><span style="color:var(--yellow);font-weight:600">'+d.hours+'</span></div></td><td style="font-weight:600;color:'+(i<3?'var(--green)':'var(--text2)')+'">'+bonus+'</td></tr>'});tb+='</table></div></div>';ob.innerHTML=p+tb}).withFailureHandler(function(e){document.getElementById('otBody').innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>'}).getOvertimeData();return}
 if(!R.length){el.innerHTML=tabs+'<div class="em">Нет данных</div>';return}var md=bmd(R),me=['🥇','🥈','🥉'],bu=[250,125,75],mc=['#FBBF24','#94a3b8','#cd7f32'];var dM={},bkM={};R.forEach(function(x){if(!dM[x.manager])dM[x.manager]={};dM[x.manager][x.date]=true;if(!bkM[x.manager])bkM[x.manager]={};bkM[x.manager][x.bank]=(bkM[x.manager][x.bank]||0)+x.obj});var myCard=_myCard(md,bkM);var p=tabs+myCard+'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:20px">';md.slice(0,3).forEach(function(d,i){p+='<div style="background:rgba(26,27,38,.88);border:1.5px solid '+mc[i]+';border-radius:14px;padding:16px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:26px">'+me[i]+'</span><span class="bd ba" style="font-weight:700">$'+bu[i]+'</span></div><div style="font-size:15px;font-weight:700;margin-bottom:10px"><span class="on '+(_isOnline(d.m)?'g':'off')+'"></span>'+d.m+'</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div style="background:var(--bg3);border-radius:6px;padding:6px;text-align:center"><div style="font-size:8px;color:var(--text2)">Объём</div><div style="font-size:14px;font-weight:700;color:var(--green)">'+f(d.o)+'</div></div><div style="background:var(--bg3);border-radius:6px;padding:6px;text-align:center"><div style="font-size:8px;color:var(--text2)">%блока</div><div style="font-size:14px;font-weight:700;color:'+(d.bp<10?'var(--green)':'var(--red)')+'">'+fp(d.bp)+'</div></div></div></div>'});p+='</div>';var mx=md[0].o,tb='<div class="sc"><h3><span class="d"></span>Рейтинг</h3><div class="tw"><table class="t"><tr><th>#</th><th>Менеджер</th><th>Карт</th><th>Объём</th><th>Ср/карту</th><th>Ср/смена</th><th>Блок</th><th>%</th></tr>';md.forEach(function(d,i){var w=Math.round(d.o/mx*100),dc=Object.keys(dM[d.m]||{}).length||1,bk=bkM[d.m]||{},tt='';for(var b in bk)tt+='<div style="display:flex;justify-content:space-between;gap:12px"><span>'+b+'</span><span style="color:var(--green);font-weight:600">'+f(bk[b])+' ₴</span></div>';tb+='<tr><td style="font-weight:700;color:'+(i<3?mc[i]:'var(--text2)')+';">'+(me[i]||i+1)+'</td><td><span class="on '+(_isOnline(d.m)?'g':'off')+'"></span><b>'+d.m+'</b></td><td>'+d.c+'</td><td><div class="tip"><div class="pg"><div class="pt"><div class="pf" style="width:'+w+'%;background:var(--green)"></div></div><span>'+f(d.o)+'</span></div><div class="tipb">'+tt+'</div></div></td><td>'+f(d.a)+'</td><td style="color:var(--yellow);font-weight:600">'+f(Math.round(d.o/dc))+'</td><td>'+f(d.bs)+'</td><td><span class="bd '+(d.bp<5?'bg':d.bp<10?'by':'br')+'">'+fp(d.bp)+'</span></td></tr>'});el.innerHTML=p+tb+'</table></div></div>'}
 // ── Transit Leaderboard ──
-var _trData=null,_trFrom='',_trTo='';
+var _trData=null,_trFrom='',_trTo='',_trTimer=null,_trSilent=false;
 function _rTransit(el,tabs){
 var now=new Date(),y=now.getFullYear(),m=now.getMonth();
 var dFrom=_trFrom||y+'-'+(m+1<10?'0':'')+(m+1)+'-01';
 var dTo=_trTo||y+'-'+(m+1<10?'0':'')+(m+1)+'-'+(now.getDate()<10?'0':'')+now.getDate();
-el.innerHTML=tabs+'<div style="margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><input type="date" id="trFrom" value="'+dFrom+'" onchange="_trFrom=this.value"><span>—</span><input type="date" id="trTo" value="'+dTo+'" onchange="_trTo=this.value"><button class="tb" onclick="_loadTransit()">Загрузить</button></div><div id="trBody"><div class="em">⏳ Загрузка данных транзита...</div></div>';
+el.innerHTML=tabs+'<div style="margin-bottom:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><input type="date" id="trFrom" value="'+dFrom+'" onchange="_trFrom=this.value"><span>—</span><input type="date" id="trTo" value="'+dTo+'" onchange="_trTo=this.value"><button class="tb" onclick="_trSilent=false;_loadTransit()">Загрузить</button><span id="trAuto" style="font-size:10px;color:var(--text2);margin-left:8px"></span></div><div id="trBody"><div class="em">⏳ Загрузка данных транзита...</div></div>';
 _loadTransit();
+_trStartAuto();
+}
+function _trStartAuto(){
+if(_trTimer)clearInterval(_trTimer);
+_trTimer=setInterval(function(){
+if(_leadTab!=='transit'){clearInterval(_trTimer);_trTimer=null;return}
+_trSilent=true;_loadTransit();
+},180000);
 }
 function _loadTransit(){
 var fr=document.getElementById('trFrom'),to=document.getElementById('trTo');
@@ -542,11 +679,14 @@ if(!fr||!to)return;
 var fromV=fr.value,toV=to.value;
 if(!fromV||!toV){document.getElementById('trBody').innerHTML='<div class="em">Укажите даты</div>';return}
 _trFrom=fromV;_trTo=toV;
-document.getElementById('trBody').innerHTML='<div class="em">⏳ Загрузка...</div>';
+if(!_trSilent)document.getElementById('trBody').innerHTML='<div class="em">⏳ Загрузка...</div>';
+var au=document.getElementById('trAuto');if(au&&_trSilent)au.textContent='🔄 обновление...';
 google.script.run.withSuccessHandler(function(data){
-_trData=data;_buildTransit();
+_trData=data;_buildTransit();_trSilent=false;
+var au=document.getElementById('trAuto');if(au)au.textContent='обновлено '+new Date().toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});
 }).withFailureHandler(function(e){
-document.getElementById('trBody').innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>';
+if(!_trSilent)document.getElementById('trBody').innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>';
+_trSilent=false;var au=document.getElementById('trAuto');if(au)au.textContent='';
 }).getTransitData(fromV,toV);
 }
 function _buildTransit(){
