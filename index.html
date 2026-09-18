@@ -164,7 +164,7 @@ var google={script:{run:{
     addAutoOverpay:function(dt,mg,oid,amt,bank,rec,com){gasCall('addautooverpay',{date:dt,manager:mg,out_id:oid,amount:amt,bank:bank,recipient:rec,comment:com},this._s,this._f)},
     deleteAutoOverpay:function(id){gasCall('deleteautooverpay',{id:id},this._s,this._f)},
     getOvertimeData:function(){gasCall('getovertime',{},this._s,this._f)},
-    getTransitData:function(fr,to){gasCall('gettransit',{from:fr,to:to},this._s,this._f,60)}
+    getTransitData:function(fr,to){gasCall('gettransit',{from:fr,to:to},this._s,this._f,120)}
   };return o},
   withFailureHandler:function(fn){return this.withSuccessHandler(function(){}).withFailureHandler(fn)}
 }}};
