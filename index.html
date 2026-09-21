@@ -164,7 +164,8 @@ var google={script:{run:{
     addAutoOverpay:function(dt,mg,oid,amt,bank,rec,com){gasCall('addautooverpay',{date:dt,manager:mg,out_id:oid,amount:amt,bank:bank,recipient:rec,comment:com},this._s,this._f)},
     deleteAutoOverpay:function(id){gasCall('deleteautooverpay',{id:id},this._s,this._f)},
     getOvertimeData:function(){gasCall('getovertime',{},this._s,this._f)},
-    getTransitData:function(fr,to){gasCall('gettransit',{from:fr,to:to},this._s,this._f,120)}
+    getTransitData:function(fr,to){gasCall('gettransit',{from:fr,to:to},this._s,this._f,120)},
+    getPhones:function(){gasCall('getphones',{},this._s,this._f,30)}
   };return o},
   withFailureHandler:function(fn){return this.withSuccessHandler(function(){}).withFailureHandler(fn)}
 }}};
@@ -1040,7 +1041,63 @@ function savePay(i,nick){
   var extra=parseFloat(document.getElementById('pe_'+i).value)||0;
   google.script.run.withSuccessHandler(function(){ts('Сохранено');go('payroll')}).withFailureHandler(function(e){ts(e.message,1)}).savePayrollEntry(_payMonth,nick,days,extra,rate);
 }
-function rPhones(el){el.innerHTML='<div style="position:relative;width:100%;height:calc(100vh - 60px);border-radius:12px;overflow:hidden;border:1px solid var(--border)"><iframe src="https://crmbinding.duckdns.org/rental" style="width:100%;height:100%;border:none;background:var(--bg2)" allow="clipboard-read;clipboard-write"></iframe></div>'}
+var _phFilter='all';
+function rPhones(el){
+  el.innerHTML='<div class="em">⏳ Загрузка трубок...</div>';
+  google.script.run.withSuccessHandler(function(d){_buildPhones(el,d)}).withFailureHandler(function(e){el.innerHTML='<div class="em" style="color:var(--red)">'+e.message+'</div>'}).getPhones();
+}
+function _buildPhones(el,d){
+  var devs=d.devices||[],total=devs.length;
+  var free=devs.filter(function(x){return x.status==='free'}),busy=devs.filter(function(x){return x.status==='held'||x.holder}),broken=devs.filter(function(x){return x.status==='broken'});
+  var totAcc=devs.reduce(function(a,x){return a+x.accounts_active},0),totAccAll=devs.reduce(function(a,x){return a+x.accounts_total},0);
+  var totMono=devs.reduce(function(a,x){return a+x.mono_today},0);
+  var load=total?Math.round(busy.length/total*100):0;
+  var srvMap={};devs.forEach(function(x){if(!srvMap[x.server])srvMap[x.server]={t:0,f:0,acc:0};srvMap[x.server].t++;if(x.status==='free')srvMap[x.server].f++;srvMap[x.server].acc+=x.accounts_active});
+  var h='<div class="g4"><div class="sc kp"><div class="kl">СВОБОДНО</div><div class="kv" style="color:var(--green)">'+free.length+'<span style="font-size:14px;color:var(--text2)"> / '+total+'</span></div><div style="font-size:11px;color:var(--text2)">'+busy.length+' в работе · '+broken.length+' нерабочих · загрузка '+load+'%</div><div style="margin-top:6px;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden"><div style="height:100%;width:'+(total?Math.round(free.length/total*100):0)+'%;background:var(--green);border-radius:2px"></div></div></div>';
+  h+='<div class="sc kp"><div class="kl">АКТИВНЫХ СЧЕТОВ</div><div class="kv" style="color:var(--blue)">'+totAcc+'<span style="font-size:14px;color:var(--text2)"> / '+totAccAll+'</span></div></div>';
+  h+='<div class="sc kp"><div class="kl">МОНО СЕГОДНЯ</div><div class="kv">'+totMono+'</div></div>';
+  h+='<div class="sc kp"><div class="kl">ОЧЕРЕДЬ</div><div class="kv">'+(d.queue_count||0)+'</div></div></div>';
+  h+='<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:16px 0">';
+  h+='<div style="display:flex;gap:4px">';
+  [['all','Все',total],['free','Свободные',free.length],['busy','В работе',busy.length],['broken','Нерабочие',broken.length]].forEach(function(f){
+    h+='<button class="btn btn-s phF" data-f="'+f[0]+'" onclick="_phFilter=\''+f[0]+'\';document.querySelectorAll(\'.phF\').forEach(function(b){b.style.background=b.dataset.f===_phFilter?\'var(--accent)\':\'var(--bg3)\'});_phTbl()" style="padding:5px 12px;font-size:12px;border-radius:6px;background:'+(_phFilter===f[0]?'var(--accent)':'var(--bg3)')+'">'+f[1]+' <b>'+f[2]+'</b></button>';
+  });
+  h+='</div><input type="text" id="phSearch" placeholder="Поиск: id, сервер..." oninput="_phTbl()" style="background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;outline:none;width:200px">';
+  h+='<button class="btn btn-s" onclick="rPhones(document.getElementById(\'va\'))" style="margin-left:auto;padding:5px 12px;font-size:12px">↻ Обновить</button></div>';
+  h+='<div style="display:flex;gap:16px"><div style="flex:1;min-width:0">';
+  h+='<div class="tw"><table class="t" id="phTable"><thead><tr><th>Трубка</th><th>Состояние</th><th>Акт.</th><th>Статус</th><th></th></tr></thead><tbody id="phBody"></tbody></table></div></div>';
+  h+='<div style="width:260px;flex-shrink:0"><div class="sc" style="padding:12px"><h3 style="font-size:13px;margin-bottom:10px"><span class="d"></span>Серверы</h3>';
+  var sKeys=Object.keys(srvMap).sort(function(a,b){return+a- +b});
+  sKeys.forEach(function(s){var sv=srvMap[s];h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)"><div><b style="font-size:13px">Сервер '+s+'</b><div style="font-size:10px;color:var(--text2)">'+sv.t+' тр · '+sv.f+' своб</div></div><span style="color:var(--green);font-weight:700;font-size:13px">'+sv.acc+' сч</span></div>'});
+  h+='</div></div></div>';
+  el.innerHTML=h;
+  window._phDevs=devs;_phTbl();
+}
+function _phTbl(){
+  var devs=window._phDevs||[],q=(document.getElementById('phSearch')||{}).value||'';q=q.toLowerCase();
+  var rows=devs.filter(function(x){
+    if(_phFilter==='free'&&x.status!=='free')return false;
+    if(_phFilter==='busy'&&x.status!=='held'&&!x.holder)return false;
+    if(_phFilter==='broken'&&x.status!=='broken')return false;
+    if(q&&x.device_id.indexOf(q)<0&&x.server.indexOf(q)<0)return false;
+    return true;
+  });
+  rows.sort(function(a,b){return b.accounts_active-a.accounts_active});
+  var h='';rows.forEach(function(x){
+    var stColor=x.status==='free'?'var(--green)':x.status==='broken'?'var(--red)':'var(--yellow)';
+    var stLabel=x.status==='free'?'Свободна':x.status==='broken'?'Нерабочая':'В работе';
+    var state='';
+    if(x.holder)state=x.holder;
+    else if(x.last){var r=x.last.reason==='manual'?'освободил '+x.last.name:x.last.reason==='lease_expired'?'освободилась по таймеру':'';var t=x.last.at?x.last.at.substring(11,16):'';if(r)state=r+(t?' · '+t:'');}
+    else state=x.note||'сегодня не бралась';
+    h+='<tr><td><b style="font-size:13px">'+x.device_id+'</b><div style="font-size:10px;color:var(--text2)">сервер '+x.server+'</div></td>';
+    h+='<td style="font-size:12px;color:var(--text2)">'+state+'</td>';
+    h+='<td style="text-align:center"><b>'+x.accounts_active+'</b><span style="font-size:10px;color:var(--text2)"> акт</span></td>';
+    h+='<td><span style="display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:'+stColor+'22;color:'+stColor+'">'+stLabel+'</span></td>';
+    h+='<td>'+(x.open_url?'<a href="'+x.open_url+'" target="_blank" rel="noopener" class="btn btn-s" style="padding:3px 10px;font-size:11px">Открыть</a>':'')+'</td></tr>';
+  });
+  var tb=document.getElementById('phBody');if(tb)tb.innerHTML=h||'<tr><td colspan="5" class="em">Нет трубок</td></tr>';
+}
 function rProfile(el){var ini=U.name.split(' ').map(function(w){return w[0]}).join('').toUpperCase().slice(0,2);var h='<div class="sc"><div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap"><div class="av" style="width:80px;height:80px;font-size:32px">'+(U.avatar?'<img src="'+U.avatar+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">':ini)+'</div><div style="flex:1;min-width:240px"><h2 style="font-size:20px;margin-bottom:4px">'+U.name+'</h2><div style="color:var(--text2);font-size:13px;margin-bottom:4px">'+U.email+'</div><span class="bd ba">'+U.roleLabel+'</span>'+(U.nick?'<div style="color:var(--text2);font-size:12px;margin-top:8px">Ник: <b style="color:var(--text)">'+U.nick+'</b></div>':'')+'</div></div></div>';
 h+='<div class="sc" style="margin-top:20px"><h3><span class="d"></span>Настройки</h3><div class="fr"><div class="fg"><label>Ник</label><input type="text" id="pN" value="'+(U.nick||'')+'"></div><div class="fg"><label>Аватар URL</label><input type="text" id="pA" value="'+(U.avatar||'')+'"></div></div><button class="btn btn-a" onclick="sP()">💾 Сохранить</button></div>';
 h+='<div class="sc" style="margin-top:20px"><h3><span class="d"></span>Тема оформления</h3>';
