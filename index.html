@@ -481,14 +481,27 @@ mkChart('tm1','bar',md.map(function(d){return d.m}),[{data:md.map(function(d){re
 // ═══ АНАЛИТИКА ТРАНЗИТ ═══
 var _atData=null;
 function _transitNick(name){
-if(!D||!D.registeredNicks||!name)return name;
-var a=name.toLowerCase().split('@')[0].replace(/[\s]/g,'');
-for(var i=0;i<D.registeredNicks.length;i++){if(_matchMgr(D.registeredNicks[i],name))return D.registeredNicks[i]}
-var stripped=a.replace(/_(transit|pay|tr|p2p)\d*$/,'');
-if(stripped!==a){for(var i=0;i<D.registeredNicks.length;i++){if(_matchMgr(D.registeredNicks[i],stripped))return D.registeredNicks[i]}}
-var stripped2=stripped.replace(/_(prc|acq)\d*$/,'');
-if(stripped2!==stripped&&stripped2.length>=3){for(var i=0;i<D.registeredNicks.length;i++){var nb=D.registeredNicks[i].toLowerCase().replace(/[@\s]/g,'').replace(/_(prc|acq)\d*$/,'').replace(/_?\d+$/,'');if(nb===stripped2||(nb.length>=4&&stripped2.length>=4&&(nb.indexOf(stripped2)===0||stripped2.indexOf(nb)===0)))return D.registeredNicks[i]}}
+if(!name)return name;
+var raw=name.toLowerCase().split('@')[0].replace(/[\s]/g,'');
+var clean=raw.replace(/_(transit|pay|tr|p2p)\d*$/,'').replace(/_(prc|acq)\d*$/,'').replace(/_?\d+$/,'');
+if(D&&D.registeredNicks){
+  for(var i=0;i<D.registeredNicks.length;i++){if(_matchMgr(D.registeredNicks[i],name))return D.registeredNicks[i]}
+  var s1=raw.replace(/_(transit|pay|tr|p2p)\d*$/,'');
+  if(s1!==raw){for(var i=0;i<D.registeredNicks.length;i++){if(_matchMgr(D.registeredNicks[i],s1))return D.registeredNicks[i]}}
+  if(clean!==s1&&clean.length>=3){for(var i=0;i<D.registeredNicks.length;i++){var nb=D.registeredNicks[i].toLowerCase().replace(/[@\s]/g,'').replace(/_(prc|acq)\d*$/,'').replace(/_?\d+$/,'');if(nb===clean||(nb.length>=3&&clean.length>=3&&(nb.indexOf(clean)===0||clean.indexOf(nb)===0)))return D.registeredNicks[i]}}
+}
+if(name.indexOf('@')>0)return raw.replace(/_(pay|transit|tr)\d*$/,'');
+if(raw!==name.toLowerCase())return raw;
 return name}
+function _mergeTransitDupes(emp){
+var map={},order=[];
+emp.forEach(function(e){
+  var k=e._dn.toLowerCase();
+  if(!map[k]){map[k]={name:e.name,_dn:e._dn,total:0,success:0,declined:0,ba_count:0,success_amt:0,total_amt:0,in_cnt:0,in_amt:0,out_cnt:0,out_amt:0,_3ds_sum:0,_3ds_n:0};order.push(k)}
+  var m=map[k];m.total+=e.total||0;m.success+=e.success||0;m.declined+=e.declined||0;m.success_amt+=e.success_amt||0;m.total_amt+=e.total_amt||0;m.in_cnt+=e.in_cnt||0;m.in_amt+=e.in_amt||0;m.out_cnt+=e.out_cnt||0;m.out_amt+=e.out_amt||0;if((e.ba_count||0)>m.ba_count)m.ba_count=e.ba_count;if(e.avg_3ds!=null){m._3ds_sum+=e.avg_3ds*(e.success||1);m._3ds_n+=e.success||1}
+  if((e.success_amt||0)>(map[k]._best||0)){map[k]._best=e.success_amt;m._dn=e._dn}
+});
+return order.map(function(k){var m=map[k];m.cr=m.total?+(m.success/m.total*100).toFixed(1):0;m.avg_3ds=m._3ds_n?m._3ds_sum/m._3ds_n:null;m.avg_full=null;return m}).sort(function(a,b){return b.success_amt-a.success_amt})}
 function aTrans(el){
 var from=document.getElementById('dFrom').value,to=document.getElementById('dTo').value;
 el.innerHTML='<div class="em">⏳ Загрузка данных транзита...</div>';
@@ -500,8 +513,9 @@ el.innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message
 }
 function _buildATrans(el){
 if(!_atData||!_atData.employees||!_atData.employees.length){el.innerHTML='<div class="em">Нет данных</div>';return}
-var emp=_atData.employees;
-emp.forEach(function(e){e._dn=_transitNick(e.name)});
+var _raw=_atData.employees;
+_raw.forEach(function(e){e._dn=_transitNick(e.name)});
+var emp=_mergeTransitDupes(_raw);
 var totT=0,totS=0,totD=0,totSA=0,totTA=0,totOut=0,totOutA=0,tot3ds=0,n3ds=0,totBA=0;
 emp.forEach(function(e){totT+=e.total;totS+=e.success;totD+=e.declined;totSA+=e.success_amt;totTA+=e.total_amt;totOut+=e.out_cnt||0;totOutA+=e.out_amt||0;if(e.avg_3ds!=null){tot3ds+=e.avg_3ds*(e.success||1);n3ds+=e.success||1}totBA+=e.ba_count||0});
 var avgCr=totT?(totS/totT*100):0,avg3ds=n3ds?(tot3ds/n3ds):0,avgPerMgr=emp.length?(totSA/emp.length):0;
@@ -588,8 +602,11 @@ ct.appendChild(wrap);
 google.script.run.withSuccessHandler(function(data){
 var w=document.getElementById('dashTr');if(!w)return;
 if(!data||!data.employees||!data.employees.length){w.innerHTML='<div class="sc" style="margin-top:20px"><h3><span class="d"></span>🔄 Транзит</h3><div class="em">Нет данных транзита</div></div>';return}
-var emp=data.employees,totT=0,totS=0,totD=0,totSA=0,totOutA=0;
-emp.forEach(function(e){e._dn=_transitNick(e.name);totT+=e.total;totS+=e.success;totD+=e.declined;totSA+=e.success_amt;totOutA+=e.out_amt||0});
+var _raw3=data.employees;
+_raw3.forEach(function(e){e._dn=_transitNick(e.name)});
+var emp=_mergeTransitDupes(_raw3);
+var totT=0,totS=0,totD=0,totSA=0,totOutA=0;
+emp.forEach(function(e){totT+=e.total;totS+=e.success;totD+=e.declined;totSA+=e.success_amt;totOutA+=e.out_amt||0});
 var avgCr=totT?(totS/totT*100):0;
 var h='<div class="sc" style="margin-top:20px"><h3><span class="d"></span>🔄 Транзит</h3>';
 h+='<div class="kg" style="margin-bottom:16px"><div class="kc"><div class="kl">👥 Менеджеров</div><div class="kv bl">'+emp.length+'</div></div>';
@@ -702,10 +719,12 @@ _trSilent=false;var au=document.getElementById('trAuto');if(au)au.textContent=''
 }
 function _buildTransit(){
 var el=document.getElementById('trBody');if(!el||!_trData)return;
-var emp=_trData.employees||[];
-if(!emp.length){el.innerHTML='<div class="em">Нет данных за выбранный период</div>';return}
+var _raw2=_trData.employees||[];
+if(!_raw2.length){el.innerHTML='<div class="em">Нет данных за выбранный период</div>';return}
+_raw2.forEach(function(e){e._dn=_transitNick(e.name)});
+var emp=_mergeTransitDupes(_raw2);
 var totS=0,totD=0,totA=0,totT=0;
-emp.forEach(function(e){e._dn=_transitNick(e.name);totT+=e.total;totS+=e.success;totD+=e.declined;totA+=e.success_amt});
+emp.forEach(function(e){totT+=e.total;totS+=e.success;totD+=e.declined;totA+=e.success_amt});
 var avgCr=totT?(totS/totT*100):0;
 var h='<div class="kg"><div class="kc"><div class="kl">👥 Менеджеров</div><div class="kv bl">'+emp.length+'</div></div>';
 h+='<div class="kc"><div class="kl">📦 Всего заявок</div><div class="kv">'+f(totT)+'</div></div>';
