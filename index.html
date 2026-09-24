@@ -480,6 +480,15 @@ mkChart('tm1','bar',md.map(function(d){return d.m}),[{data:md.map(function(d){re
 
 // ═══ АНАЛИТИКА ТРАНЗИТ ═══
 var _atData=null;
+function _transitNick(name){
+if(!D||!D.registeredNicks||!name)return name;
+var a=name.toLowerCase().split('@')[0].replace(/[\s]/g,'');
+for(var i=0;i<D.registeredNicks.length;i++){if(_matchMgr(D.registeredNicks[i],name))return D.registeredNicks[i]}
+var stripped=a.replace(/_(transit|pay|tr|p2p)\d*$/,'');
+if(stripped!==a){for(var i=0;i<D.registeredNicks.length;i++){if(_matchMgr(D.registeredNicks[i],stripped))return D.registeredNicks[i]}}
+var stripped2=stripped.replace(/_(prc|acq)\d*$/,'');
+if(stripped2!==stripped&&stripped2.length>=3){for(var i=0;i<D.registeredNicks.length;i++){var nb=D.registeredNicks[i].toLowerCase().replace(/[@\s]/g,'').replace(/_(prc|acq)\d*$/,'').replace(/_?\d+$/,'');if(nb===stripped2||(nb.length>=4&&stripped2.length>=4&&(nb.indexOf(stripped2)===0||stripped2.indexOf(nb)===0)))return D.registeredNicks[i]}}
+return name}
 function aTrans(el){
 var from=document.getElementById('dFrom').value,to=document.getElementById('dTo').value;
 el.innerHTML='<div class="em">⏳ Загрузка данных транзита...</div>';
@@ -491,7 +500,9 @@ el.innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message
 }
 function _buildATrans(el){
 if(!_atData||!_atData.employees||!_atData.employees.length){el.innerHTML='<div class="em">Нет данных</div>';return}
-var emp=_atData.employees,totT=0,totS=0,totD=0,totSA=0,totTA=0,totOut=0,totOutA=0,tot3ds=0,n3ds=0,totBA=0;
+var emp=_atData.employees;
+emp.forEach(function(e){e._dn=_transitNick(e.name)});
+var totT=0,totS=0,totD=0,totSA=0,totTA=0,totOut=0,totOutA=0,tot3ds=0,n3ds=0,totBA=0;
 emp.forEach(function(e){totT+=e.total;totS+=e.success;totD+=e.declined;totSA+=e.success_amt;totTA+=e.total_amt;totOut+=e.out_cnt||0;totOutA+=e.out_amt||0;if(e.avg_3ds!=null){tot3ds+=e.avg_3ds*(e.success||1);n3ds+=e.success||1}totBA+=e.ba_count||0});
 var avgCr=totT?(totS/totT*100):0,avg3ds=n3ds?(tot3ds/n3ds):0,avgPerMgr=emp.length?(totSA/emp.length):0;
 var h='';
@@ -527,7 +538,7 @@ h+='<div class="sc"><h3><span class="d"></span>Полная таблица</h3><
 emp.forEach(function(d,i){
 var w=Math.round(d.success_amt/mx*100),diff=d.success_amt-(d.out_amt||0),avgChk=d.success?Math.round(d.success_amt/d.success):0;
 h+='<tr><td style="font-weight:700;color:'+(i<3?mc[i]:'var(--text2)')+';">'+(me[i]||i+1)+'</td>';
-h+='<td><b>'+d.name+'</b></td>';
+h+='<td><b>'+d._dn+'</b></td>';
 h+='<td>'+d.total+'</td>';
 h+='<td style="color:var(--green)">'+d.success+'</td>';
 h+='<td style="color:var(--red)">'+d.declined+'</td>';
@@ -546,13 +557,13 @@ el.innerHTML=h;
 
 // Build charts
 var top10=emp.slice(0,10);
-mkChart('at1','bar',top10.map(function(d){return d.name}),[{label:'Объём ₴',data:top10.map(function(d){return d.success_amt}),backgroundColor:top10.map(function(d,i){return i<3?['#FBBF24','#94a3b8','#cd7f32'][i]:PAL[i%PAL.length]+'88'}),borderRadius:5,borderSkipped:false}]);
+mkChart('at1','bar',top10.map(function(d){return d._dn}),[{label:'Объём ₴',data:top10.map(function(d){return d.success_amt}),backgroundColor:top10.map(function(d,i){return i<3?['#FBBF24','#94a3b8','#cd7f32'][i]:PAL[i%PAL.length]+'88'}),borderRadius:5,borderSkipped:false}]);
 
 var crSorted=emp.slice().sort(function(a,b){return b.cr-a.cr}).slice(0,15);
-mkChart('at2','bar',crSorted.map(function(d){return d.name}),[{label:'CR %',data:crSorted.map(function(d){return d.cr}),backgroundColor:crSorted.map(function(d){return d.cr>=70?'rgba(74,222,128,.7)':d.cr>=50?'rgba(251,191,36,.7)':'rgba(248,113,113,.7)'}),borderRadius:5,borderSkipped:false}],{scales:{y:{beginAtZero:true,max:100}}});
+mkChart('at2','bar',crSorted.map(function(d){return d._dn}),[{label:'CR %',data:crSorted.map(function(d){return d.cr}),backgroundColor:crSorted.map(function(d){return d.cr>=70?'rgba(74,222,128,.7)':d.cr>=50?'rgba(251,191,36,.7)':'rgba(248,113,113,.7)'}),borderRadius:5,borderSkipped:false}],{scales:{y:{beginAtZero:true,max:100}}});
 
 var top10io=emp.slice(0,10);
-mkChart('at3','bar',top10io.map(function(d){return d.name}),[{label:'IN ₴',data:top10io.map(function(d){return d.success_amt}),backgroundColor:'rgba(74,222,128,.7)',borderRadius:5,borderSkipped:false},{label:'OUT ₴',data:top10io.map(function(d){return d.out_amt||0}),backgroundColor:'rgba(251,191,36,.7)',borderRadius:5,borderSkipped:false}]);
+mkChart('at3','bar',top10io.map(function(d){return d._dn}),[{label:'IN ₴',data:top10io.map(function(d){return d.success_amt}),backgroundColor:'rgba(74,222,128,.7)',borderRadius:5,borderSkipped:false},{label:'OUT ₴',data:top10io.map(function(d){return d.out_amt||0}),backgroundColor:'rgba(251,191,36,.7)',borderRadius:5,borderSkipped:false}]);
 
 var crBuckets=[0,0,0,0,0];
 emp.forEach(function(d){var c=d.cr;if(c>=80)crBuckets[0]++;else if(c>=70)crBuckets[1]++;else if(c>=60)crBuckets[2]++;else if(c>=50)crBuckets[3]++;else crBuckets[4]++});
@@ -560,10 +571,10 @@ mkChart('at4','doughnut',['80%+','70-80%','60-70%','50-60%','<50%'],[{data:crBuc
 
 var tdsSorted=emp.filter(function(d){return d.avg_3ds!=null}).sort(function(a,b){return a.avg_3ds-b.avg_3ds}).slice(0,15);
 if(tdsSorted.length){
-mkChart('at5','bar',tdsSorted.map(function(d){return d.name}),[{label:'3DS сек',data:tdsSorted.map(function(d){return Math.round(d.avg_3ds)}),backgroundColor:tdsSorted.map(function(d){return d.avg_3ds<=45?'rgba(74,222,128,.7)':d.avg_3ds<=90?'rgba(251,191,36,.7)':'rgba(248,113,113,.7)'}),borderRadius:5,borderSkipped:false}]);}
+mkChart('at5','bar',tdsSorted.map(function(d){return d._dn}),[{label:'3DS сек',data:tdsSorted.map(function(d){return Math.round(d.avg_3ds)}),backgroundColor:tdsSorted.map(function(d){return d.avg_3ds<=45?'rgba(74,222,128,.7)':d.avg_3ds<=90?'rgba(251,191,36,.7)':'rgba(248,113,113,.7)'}),borderRadius:5,borderSkipped:false}]);}
 
 var baSorted=emp.slice().sort(function(a,b){return b.ba_count-a.ba_count}).slice(0,15);
-mkChart('at6','bar',baSorted.map(function(d){return d.name}),[{label:'BA',data:baSorted.map(function(d){return d.ba_count}),backgroundColor:'rgba(96,165,250,.7)',borderRadius:5,borderSkipped:false}]);
+mkChart('at6','bar',baSorted.map(function(d){return d._dn}),[{label:'BA',data:baSorted.map(function(d){return d.ba_count}),backgroundColor:'rgba(96,165,250,.7)',borderRadius:5,borderSkipped:false}]);
 }
 
 // ═══ ДАШБОРД ═══
@@ -578,7 +589,7 @@ google.script.run.withSuccessHandler(function(data){
 var w=document.getElementById('dashTr');if(!w)return;
 if(!data||!data.employees||!data.employees.length){w.innerHTML='<div class="sc" style="margin-top:20px"><h3><span class="d"></span>🔄 Транзит</h3><div class="em">Нет данных транзита</div></div>';return}
 var emp=data.employees,totT=0,totS=0,totD=0,totSA=0,totOutA=0;
-emp.forEach(function(e){totT+=e.total;totS+=e.success;totD+=e.declined;totSA+=e.success_amt;totOutA+=e.out_amt||0});
+emp.forEach(function(e){e._dn=_transitNick(e.name);totT+=e.total;totS+=e.success;totD+=e.declined;totSA+=e.success_amt;totOutA+=e.out_amt||0});
 var avgCr=totT?(totS/totT*100):0;
 var h='<div class="sc" style="margin-top:20px"><h3><span class="d"></span>🔄 Транзит</h3>';
 h+='<div class="kg" style="margin-bottom:16px"><div class="kc"><div class="kl">👥 Менеджеров</div><div class="kv bl">'+emp.length+'</div></div>';
@@ -595,16 +606,16 @@ h+='<div class="sc"><h3 style="font-size:13px"><span class="d"></span>CR Топ-
 var me2=['🥇','🥈','🥉'],mc2=['#FBBF24','#94a3b8','#cd7f32'];
 h+='<div class="tw"><table class="t"><tr><th>#</th><th>Менеджер</th><th>Заявок</th><th>Успех</th><th>CR</th><th>Объём</th><th>OUT</th></tr>';
 emp.slice(0,10).forEach(function(d,i){
-h+='<tr><td style="font-weight:700;color:'+(i<3?mc2[i]:'var(--text2)')+';">'+(me2[i]||i+1)+'</td><td><b>'+d.name+'</b></td><td>'+d.total+'</td><td style="color:var(--green)">'+d.success+'</td><td><span class="bd '+(d.cr>=70?'bg':d.cr>=50?'by':'br')+'">'+fp(d.cr)+'</span></td><td style="color:var(--green);font-weight:600">'+f(d.success_amt)+'</td><td style="color:var(--yellow)">'+(d.out_amt?f(d.out_amt):'—')+'</td></tr>'});
+h+='<tr><td style="font-weight:700;color:'+(i<3?mc2[i]:'var(--text2)')+';">'+(me2[i]||i+1)+'</td><td><b>'+d._dn+'</b></td><td>'+d.total+'</td><td style="color:var(--green)">'+d.success+'</td><td><span class="bd '+(d.cr>=70?'bg':d.cr>=50?'by':'br')+'">'+fp(d.cr)+'</span></td><td style="color:var(--green);font-weight:600">'+f(d.success_amt)+'</td><td style="color:var(--yellow)">'+(d.out_amt?f(d.out_amt):'—')+'</td></tr>'});
 h+='</table></div>';
 if(data.updated)h+='<div style="text-align:right;font-size:10px;color:var(--text2);margin-top:6px">EOG: '+data.updated+'</div>';
 h+='</div>';
 w.innerHTML=h;
 var top5=emp.slice(0,5);
-mkChart('dtr1','bar',top5.map(function(d){return d.name}),[{data:top5.map(function(d){return d.success_amt}),backgroundColor:top5.map(function(d,i){return i<3?['#FBBF24','#94a3b8','#cd7f32'][i]:PAL[i%PAL.length]+'88'}),borderRadius:5,borderSkipped:false}]);
-mkChart('dtr2','bar',top5.map(function(d){return d.name}),[{label:'IN',data:top5.map(function(d){return d.success_amt}),backgroundColor:'rgba(74,222,128,.7)',borderRadius:5,borderSkipped:false},{label:'OUT',data:top5.map(function(d){return d.out_amt||0}),backgroundColor:'rgba(251,191,36,.7)',borderRadius:5,borderSkipped:false}]);
+mkChart('dtr1','bar',top5.map(function(d){return d._dn}),[{data:top5.map(function(d){return d.success_amt}),backgroundColor:top5.map(function(d,i){return i<3?['#FBBF24','#94a3b8','#cd7f32'][i]:PAL[i%PAL.length]+'88'}),borderRadius:5,borderSkipped:false}]);
+mkChart('dtr2','bar',top5.map(function(d){return d._dn}),[{label:'IN',data:top5.map(function(d){return d.success_amt}),backgroundColor:'rgba(74,222,128,.7)',borderRadius:5,borderSkipped:false},{label:'OUT',data:top5.map(function(d){return d.out_amt||0}),backgroundColor:'rgba(251,191,36,.7)',borderRadius:5,borderSkipped:false}]);
 var crTop=emp.slice().sort(function(a,b){return b.cr-a.cr}).slice(0,5);
-mkChart('dtr3','bar',crTop.map(function(d){return d.name}),[{data:crTop.map(function(d){return d.cr}),backgroundColor:crTop.map(function(d){return d.cr>=70?'rgba(74,222,128,.7)':d.cr>=50?'rgba(251,191,36,.7)':'rgba(248,113,113,.7)'}),borderRadius:5,borderSkipped:false}],{scales:{y:{beginAtZero:true,max:100}}});
+mkChart('dtr3','bar',crTop.map(function(d){return d._dn}),[{data:crTop.map(function(d){return d.cr}),backgroundColor:crTop.map(function(d){return d.cr>=70?'rgba(74,222,128,.7)':d.cr>=50?'rgba(251,191,36,.7)':'rgba(248,113,113,.7)'}),borderRadius:5,borderSkipped:false}],{scales:{y:{beginAtZero:true,max:100}}});
 }).withFailureHandler(function(e){
 var w=document.getElementById('dashTr');if(w)w.innerHTML='<div class="sc" style="margin-top:20px"><h3><span class="d"></span>🔄 Транзит</h3><div class="em" style="color:var(--red)">'+e.message+'</div></div>';
 }).getTransitData(from,to);
@@ -694,7 +705,7 @@ var el=document.getElementById('trBody');if(!el||!_trData)return;
 var emp=_trData.employees||[];
 if(!emp.length){el.innerHTML='<div class="em">Нет данных за выбранный период</div>';return}
 var totS=0,totD=0,totA=0,totT=0;
-emp.forEach(function(e){totT+=e.total;totS+=e.success;totD+=e.declined;totA+=e.success_amt});
+emp.forEach(function(e){e._dn=_transitNick(e.name);totT+=e.total;totS+=e.success;totD+=e.declined;totA+=e.success_amt});
 var avgCr=totT?(totS/totT*100):0;
 var h='<div class="kg"><div class="kc"><div class="kl">👥 Менеджеров</div><div class="kv bl">'+emp.length+'</div></div>';
 h+='<div class="kc"><div class="kl">📦 Всего заявок</div><div class="kv">'+f(totT)+'</div></div>';
@@ -707,7 +718,7 @@ h+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,
 emp.slice(0,3).forEach(function(d,i){
 h+='<div style="background:rgba(26,27,38,.88);border:1.5px solid '+mc[i]+';border-radius:14px;padding:16px">';
 h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:26px">'+me[i]+'</span></div>';
-h+='<div style="font-size:15px;font-weight:700;margin-bottom:10px">'+d.name+'</div>';
+h+='<div style="font-size:15px;font-weight:700;margin-bottom:10px">'+d._dn+'</div>';
 h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
 h+='<div style="background:var(--bg3);border-radius:6px;padding:6px;text-align:center"><div style="font-size:8px;color:var(--text2)">Объём</div><div style="font-size:14px;font-weight:700;color:var(--green)">'+f(d.success_amt)+'</div></div>';
 h+='<div style="background:var(--bg3);border-radius:6px;padding:6px;text-align:center"><div style="font-size:8px;color:var(--text2)">CR</div><div style="font-size:14px;font-weight:700;color:'+(d.cr>=70?'var(--green)':d.cr>=50?'var(--yellow)':'var(--red)')+'">'+fp(d.cr)+'</div></div>';
@@ -720,7 +731,7 @@ h+='<th>3DS сек</th></tr>';
 emp.forEach(function(d,i){
 var w=Math.round(d.success_amt/mx*100);
 h+='<tr><td style="font-weight:700;color:'+(i<3?mc[i]:'var(--text2)')+';">'+(me[i]||i+1)+'</td>';
-h+='<td><b>'+d.name+'</b></td>';
+h+='<td><b>'+d._dn+'</b></td>';
 h+='<td>'+d.total+'</td>';
 h+='<td style="color:var(--green)">'+d.success+'</td>';
 h+='<td style="color:var(--red)">'+d.declined+'</td>';
