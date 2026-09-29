@@ -967,9 +967,37 @@ h+='<div class="sc sc-col"><h3 onclick="this.parentElement.classList.toggle(\'sc
 dates.forEach(function(d){var g=byDate[d];
 h+='<tr><td>'+d+'</td><td>'+g.total+'</td><td class="g">'+g.otr+'</td><td class="y">'+g.blkNoDen+'</td><td class="r">'+g.blk+'</td><td class="ac">'+g.dor+'</td></tr>'});
 h+='</tbody></table></div></div></div>';
+h+='<div class="sc"><h3><span class="d"></span>Остаток по материалу</h3><div id="sbMatBody"><div class="em">⏳ Загрузка...</div></div></div>';
 el.innerHTML=h;
-dc('sbBankChart');var bCtx=document.getElementById('sbBankChart');if(bCtx){var bLabels=banks,bOtr=banks.map(function(b){return byBank[b].total.otr}),bTot=banks.map(function(b){return byBank[b].total.total}),bBlk=banks.map(function(b){return byBank[b].total.blk+byBank[b].total.blkNoDen}),bDor=banks.map(function(b){return byBank[b].total.dor});ch['sbBankChart']=new Chart(bCtx,{type:'bar',data:{labels:bLabels,datasets:[{label:'Отработано',data:bOtr,backgroundColor:'rgba(74,222,128,.8)',borderRadius:4},{label:'Блок',data:bBlk,backgroundColor:'rgba(248,113,113,.8)',borderRadius:4},{label:'Доработки',data:bDor,backgroundColor:'rgba(232,86,109,.8)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#7c7f8a',font:{size:10},padding:10,boxWidth:12}},tooltip:{callbacks:{afterBody:function(ctx){var i=ctx[0].dataIndex;return'Всего: '+bTot[i]}}}},scales:{x:{ticks:{color:'#e2e4ea',font:{size:10},maxRotation:45},grid:{display:false}},y:{ticks:{color:'#7c7f8a',font:{size:10}},grid:{color:'rgba(47,50,65,.3)'}}}}})}}
-var _matCache=null,_matSel={},_matMeth={ACQ:true,P2P:true},_matBank={};
+dc('sbBankChart');var bCtx=document.getElementById('sbBankChart');if(bCtx){var bLabels=banks,bOtr=banks.map(function(b){return byBank[b].total.otr}),bTot=banks.map(function(b){return byBank[b].total.total}),bBlk=banks.map(function(b){return byBank[b].total.blk+byBank[b].total.blkNoDen}),bDor=banks.map(function(b){return byBank[b].total.dor});ch['sbBankChart']=new Chart(bCtx,{type:'bar',data:{labels:bLabels,datasets:[{label:'Отработано',data:bOtr,backgroundColor:'rgba(74,222,128,.8)',borderRadius:4},{label:'Блок',data:bBlk,backgroundColor:'rgba(248,113,113,.8)',borderRadius:4},{label:'Доработки',data:bDor,backgroundColor:'rgba(232,86,109,.8)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#7c7f8a',font:{size:10},padding:10,boxWidth:12}},tooltip:{callbacks:{afterBody:function(ctx){var i=ctx[0].dataIndex;return'Всего: '+bTot[i]}}}},scales:{x:{ticks:{color:'#e2e4ea',font:{size:10},maxRotation:45},grid:{display:false}},y:{ticks:{color:'#7c7f8a',font:{size:10}},grid:{color:'rgba(47,50,65,.3)'}}}}})}
+_loadSbMaterial()}
+function _loadSbMaterial(){
+var mb=document.getElementById('sbMatBody');if(!mb)return;
+gasCall('getmaterial',{},function(data){
+if(!data||!data.length){mb.innerHTML='<div class="em">Нет данных</div>';return}
+var byBk={};
+data.forEach(function(r){
+var b=r.bank||'Другое';
+if(!byBk[b])byBk[b]={total:0,states:{}};
+byBk[b].total+=r.count;
+if(!byBk[b].states[r.state])byBk[b].states[r.state]=0;
+byBk[b].states[r.state]+=r.count});
+var bks=Object.keys(byBk).sort(function(a,c){return byBk[c].total-byBk[a].total});
+var h='<div class="kg" style="margin-bottom:12px">';
+bks.forEach(function(b){h+='<div class="kc"><div class="kl">'+b+'</div><div class="kv bl">'+byBk[b].total+'</div></div>'});
+h+='</div>';
+h+='<div style="display:flex;flex-wrap:wrap;gap:8px">';
+bks.forEach(function(b){
+var sts=byBk[b].states,sks=Object.keys(sts).sort(function(a,c){return sts[c]-sts[a]});
+h+='<div class="sc sc-col" style="flex:1;min-width:220px;margin-bottom:0"><h3 onclick="this.parentElement.classList.toggle(\'sc-open\')" style="font-size:10px"><span class="d"></span>'+b+' <span style="font-size:12px;font-weight:700;color:var(--text);margin-left:4px">'+byBk[b].total+'</span><span class="arr">&#9654;</span></h3>';
+h+='<div class="sb-bd">';
+sks.forEach(function(s){
+var cls=(/готов/i.test(s))?'g':(/доработ/i.test(s))?'y':'';
+h+='<div style="display:flex;justify-content:space-between;padding:4px 8px;border-bottom:1px solid var(--border);font-size:12px"><span>'+s+'</span><span class="'+(cls||'bl')+'" style="font-weight:700">'+sts[s]+'</span></div>'});
+h+='</div></div>'});
+h+='</div>';
+mb.innerHTML=h},function(e){mb.innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>'},120)}
+var _matCache=null,_matSel={},_matMeth={},_matBank={};
 function rMaterial(el,tabs){
 el.innerHTML=tabs+'<div class="sc"><h3><span class="d"></span>Остаток по материалу <span style="font-size:11px;color:var(--text2);font-weight:400">за всё время</span></h3><div id="matFilter"></div><div id="matBody"><div class="em">⏳ Загрузка...</div></div></div>';
 if(_matCache){_renderMatFilter(_matCache);_renderMat(_matCache);return}
@@ -978,6 +1006,7 @@ function _renderMatFilter(data){
 var fl=document.getElementById('matFilter');if(!fl)return;
 var allMeth={},allBk={},allSt={};data.forEach(function(r){if(r.method)allMeth[r.method]=1;if(r.bank)allBk[r.bank]=1;if(r.state)allSt[r.state]=1});
 var meths=Object.keys(allMeth).sort(),banks=Object.keys(allBk).sort(),states=Object.keys(allSt).sort();
+if(!Object.keys(_matMeth).length)meths.forEach(function(m){_matMeth[m]=true});
 if(!Object.keys(_matSel).length)states.forEach(function(s){_matSel[s]=true});
 if(!Object.keys(_matBank).length)banks.forEach(function(b){_matBank[b]=true});
 var h='<div style="margin-bottom:12px"><label style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-weight:700;display:block;margin-bottom:6px">Источник</label>';
@@ -1022,7 +1051,7 @@ h+='<div style="display:flex;justify-content:space-between;align-items:center;pa
 h+='<span><b>'+e.bank+'</b> '+e.state+'</span>';
 h+='<span class="'+(cls||'bl')+'" style="font-weight:700;font-size:16px">'+e.count+'</span></div>'});
 h+='<div class="kg" style="margin-top:16px"><div class="kc"><div class="kl">Всего материала</div><div class="kv bl">'+grandTotal+'</div></div></div>';
-h+='<div style="text-align:right;margin-top:8px"><button class="btn btn-a" onclick="_matCache=null;_matSel={};_matMeth={ACQ:true,P2P:true};_matBank={};rReport(document.getElementById(\'va\'))">🔄 Обновить</button></div>';
+h+='<div style="text-align:right;margin-top:8px"><button class="btn btn-a" onclick="_matCache=null;_matSel={};_matMeth={};_matBank={};rReport(document.getElementById(\'va\'))">🔄 Обновить</button></div>';
 el.innerHTML=h}
 function _curMonth(){var d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1<10?'0':'')+(d.getMonth()+1)}
 function _monthLabel(m){var p=m.split('-');var mn=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];return mn[parseInt(p[1])-1]+' '+p[0]}
