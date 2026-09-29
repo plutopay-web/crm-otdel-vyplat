@@ -956,6 +956,7 @@ var banks=Object.keys(byBank).sort();
 var h='<div class="kg">';h=_sbKpi(h,'Итого',tot);h+='</div>';
 h+='<div class="sc"><h3><span class="d"></span>Отработано по банкам</h3><div style="position:relative;height:320px"><canvas id="sbBankChart"></canvas></div></div>';
 h+='<div class="sc"><h3><span class="d"></span>% соотношение по дням / банк</h3><div id="sbDailyGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div></div>';
+h+='<div class="sc"><h3><span class="d"></span>Остаток по материалу</h3><div id="sbMatBody"><div class="em">⏳ Загрузка...</div></div></div>';
 banks.forEach(function(b){
 h+='<div class="sc sc-col"><h3 onclick="this.parentElement.classList.toggle(\'sc-open\')"><span class="d"></span>'+b+' <span style="font-size:13px;font-weight:700;color:var(--text);margin-left:6px">'+byBank[b].total.total+'</span><span class="arr">&#9654;</span></h3>';
 h+='<div class="sb-bd"><div class="kg">';h=_sbKpi(h,b,byBank[b].total);h+='</div>';
@@ -968,7 +969,6 @@ h+='<div class="sc sc-col"><h3 onclick="this.parentElement.classList.toggle(\'sc
 dates.forEach(function(d){var g=byDate[d];
 h+='<tr><td>'+d+'</td><td>'+g.total+'</td><td class="g">'+g.otr+'</td><td class="y">'+g.blkNoDen+'</td><td class="r">'+g.blk+'</td><td class="ac">'+g.dor+'</td></tr>'});
 h+='</tbody></table></div></div></div>';
-h+='<div class="sc"><h3><span class="d"></span>Остаток по материалу</h3><div id="sbMatBody"><div class="em">⏳ Загрузка...</div></div></div>';
 el.innerHTML=h;
 var _nOtr='rgba(0,255,136,.85)',_nBlk='rgba(255,60,100,.85)',_nBlkND='rgba(255,170,0,.85)',_nDor='rgba(190,50,255,.85)';
 dc('sbBankChart');var bCtx=document.getElementById('sbBankChart');if(bCtx){var bLabels=banks,bOtr=banks.map(function(b){return byBank[b].total.otr}),bTot=banks.map(function(b){return byBank[b].total.total}),bBlk=banks.map(function(b){return byBank[b].total.blk+byBank[b].total.blkNoDen}),bDor=banks.map(function(b){return byBank[b].total.dor});ch['sbBankChart']=new Chart(bCtx,{type:'bar',data:{labels:bLabels,datasets:[{label:'Отработано',data:bOtr,backgroundColor:_nOtr,borderColor:'rgba(0,255,136,.4)',borderWidth:1,borderRadius:4},{label:'Блок',data:bBlk,backgroundColor:_nBlk,borderColor:'rgba(255,60,100,.4)',borderWidth:1,borderRadius:4},{label:'Доработки',data:bDor,backgroundColor:_nDor,borderColor:'rgba(190,50,255,.4)',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#aab',font:{size:10},padding:10,boxWidth:12}},tooltip:{mode:'index',intersect:false,callbacks:{afterBody:function(ctx){var i=ctx[0].dataIndex;return'Всего: '+bTot[i]}}}},scales:{x:{ticks:{color:'#e2e4ea',font:{size:10},maxRotation:45},grid:{display:false}},y:{ticks:{color:'#7c7f8a',font:{size:10}},grid:{color:'rgba(47,50,65,.3)'}}}}})}
@@ -1001,15 +1001,24 @@ if(_sbMatData){_renderSbMat();return}
 gasCall('getmaterial',{},function(data){_sbMatData=data;_renderSbMat()},function(e){mb.innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>'},120)}
 function _sbMatToggle(s){var k=s.toLowerCase();_sbMatSt[k]=_sbMatSt[k]?false:true;_renderSbMat()}
 function _sbMatToggleBk(b){_sbMatBk[b]=_sbMatBk[b]?false:true;_renderSbMat()}
-function _sbMatReset(){_sbMatSt={'готов':true,'доработка':true,'см2 доработка':true,'доработка см':true};_sbMatBk={};_renderSbMat()}
+function _sbMatReset(){_sbMatSt={};_sbMatBk={};_renderSbMat()}
 function _renderSbMat(){
 var mb=document.getElementById('sbMatBody');if(!mb)return;
 var data=_sbMatData;
 if(!data||!data.length){mb.innerHTML='<div class="em">Нет данных</div>';return}
-var allSt={},allBk={};data.forEach(function(r){if(r.state)allSt[r.state.toLowerCase()]=r.state;if(r.bank)allBk[r.bank]=1});
+var _matExclude={'ипн база':1,'копия 09.03.2025':1,'трубки моно':1,'трубки моно2':1,'.трубки моно2':1,'.трубки моно':1};
+var allSt={},allBk={};data.forEach(function(r){
+var bk=r.bank||'';var bkL=bk.toLowerCase();
+var skip=false;for(var ex in _matExclude){if(bkL.indexOf(ex)>=0){skip=true;break}}
+if(skip)return;
+if(r.state)allSt[r.state.toLowerCase()]=r.state;if(bk)allBk[bk]=1});
 if(!Object.keys(_sbMatBk).length)for(var bk in allBk)_sbMatBk[bk]=true;
 var activeSt={};for(var k in _sbMatSt)if(_sbMatSt[k])activeSt[k.toLowerCase()]=true;
-var filtered=data.filter(function(r){return activeSt[(r.state||'').toLowerCase()]&&_sbMatBk[r.bank||'Другое']});
+var filtered=data.filter(function(r){
+var bk=(r.bank||'').toLowerCase();
+var skip=false;for(var ex in _matExclude){if(bk.indexOf(ex)>=0){skip=true;break}}
+if(skip)return false;
+return activeSt[(r.state||'').toLowerCase()]&&_sbMatBk[r.bank||'Другое']});
 var byBk={};
 filtered.forEach(function(r){
 var b=r.bank||'Другое';
@@ -1026,7 +1035,7 @@ h+='</div>';
 h+='<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-weight:700">Банк:</span>';
 Object.keys(allBk).sort().forEach(function(b){var on=_sbMatBk[b];
 h+='<button class="btn-g" onclick="_sbMatToggleBk(\''+b.replace(/'/g,"\\'")+'\')" style="font-size:10px;padding:3px 8px;'+(on?'background:var(--green);color:#000;border-color:var(--green)':'')+'">'+b+'</button>'});
-h+='<button class="btn-g" onclick="_sbMatReset()" style="font-size:10px;padding:3px 8px;margin-left:4px">Сброс</button></div>';
+h+='<button class="btn-g" onclick="_sbMatReset()" style="font-size:10px;padding:3px 8px;margin-left:4px;background:var(--red);color:#fff;border-color:var(--red)">Сбросить всё</button></div>';
 var bks=Object.keys(byBk).sort(function(a,c){return byBk[c].total-byBk[a].total});
 var grandTotal=0;bks.forEach(function(b){grandTotal+=byBk[b].total});
 h+='<div class="kg" style="margin-bottom:12px"><div class="kc"><div class="kl">Всего остаток</div><div class="kv bl">'+grandTotal+'</div></div>';
