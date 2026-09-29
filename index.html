@@ -971,21 +971,22 @@ h+='<div class="sc"><h3><span class="d"></span>Остаток по матери�
 el.innerHTML=h;
 dc('sbBankChart');var bCtx=document.getElementById('sbBankChart');if(bCtx){var bLabels=banks,bOtr=banks.map(function(b){return byBank[b].total.otr}),bTot=banks.map(function(b){return byBank[b].total.total}),bBlk=banks.map(function(b){return byBank[b].total.blk+byBank[b].total.blkNoDen}),bDor=banks.map(function(b){return byBank[b].total.dor});ch['sbBankChart']=new Chart(bCtx,{type:'bar',data:{labels:bLabels,datasets:[{label:'Отработано',data:bOtr,backgroundColor:'rgba(74,222,128,.8)',borderRadius:4},{label:'Блок',data:bBlk,backgroundColor:'rgba(248,113,113,.8)',borderRadius:4},{label:'Доработки',data:bDor,backgroundColor:'rgba(232,86,109,.8)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#7c7f8a',font:{size:10},padding:10,boxWidth:12}},tooltip:{callbacks:{afterBody:function(ctx){var i=ctx[0].dataIndex;return'Всего: '+bTot[i]}}}},scales:{x:{ticks:{color:'#e2e4ea',font:{size:10},maxRotation:45},grid:{display:false}},y:{ticks:{color:'#7c7f8a',font:{size:10}},grid:{color:'rgba(47,50,65,.3)'}}}}})}
 _loadSbMaterial()}
-var _sbMatData=null,_sbMatSt={'готов':true,'доработка':true,'см2 доработка':true,'доработка см':true};
+var _sbMatData=null,_sbMatSt={'готов':true,'доработка':true,'см2 доработка':true,'доработка см':true},_sbMatBk={};
 function _loadSbMaterial(){
 var mb=document.getElementById('sbMatBody');if(!mb)return;
 if(_sbMatData){_renderSbMat();return}
 gasCall('getmaterial',{},function(data){_sbMatData=data;_renderSbMat()},function(e){mb.innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>'},120)}
 function _sbMatToggle(s){var k=s.toLowerCase();_sbMatSt[k]=_sbMatSt[k]?false:true;_renderSbMat()}
-function _sbMatAdd(s){_sbMatSt[s]=true;_renderSbMat()}
-function _sbMatReset(){_sbMatSt={'готов':true,'доработка':true,'см2 доработка':true,'доработка см':true};_renderSbMat()}
+function _sbMatToggleBk(b){_sbMatBk[b]=_sbMatBk[b]?false:true;_renderSbMat()}
+function _sbMatReset(){_sbMatSt={'готов':true,'доработка':true,'см2 доработка':true,'доработка см':true};_sbMatBk={};_renderSbMat()}
 function _renderSbMat(){
 var mb=document.getElementById('sbMatBody');if(!mb)return;
 var data=_sbMatData;
 if(!data||!data.length){mb.innerHTML='<div class="em">Нет данных</div>';return}
-var allSt={};data.forEach(function(r){if(r.state)allSt[r.state.toLowerCase()]=r.state});
+var allSt={},allBk={};data.forEach(function(r){if(r.state)allSt[r.state.toLowerCase()]=r.state;if(r.bank)allBk[r.bank]=1});
+if(!Object.keys(_sbMatBk).length)for(var bk in allBk)_sbMatBk[bk]=true;
 var activeSt={};for(var k in _sbMatSt)if(_sbMatSt[k])activeSt[k.toLowerCase()]=true;
-var filtered=data.filter(function(r){return activeSt[(r.state||'').toLowerCase()]});
+var filtered=data.filter(function(r){return activeSt[(r.state||'').toLowerCase()]&&_sbMatBk[r.bank||'Другое']});
 var byBk={};
 filtered.forEach(function(r){
 var b=r.bank||'Другое';
@@ -994,10 +995,14 @@ byBk[b].total+=r.count;
 var st=r.state||'';
 if(!byBk[b].states[st])byBk[b].states[st]=0;
 byBk[b].states[st]+=r.count});
-var h='<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-weight:700">Фильтр:</span>';
+var h='<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-weight:700">Статус:</span>';
 var allKeys=Object.keys(allSt).sort();
 allKeys.forEach(function(k){var on=activeSt[k];var label=allSt[k];
 h+='<button class="btn-g" onclick="_sbMatToggle(\''+label.replace(/'/g,"\\'")+'\')" style="font-size:10px;padding:3px 8px;'+(on?'background:var(--accent);color:#fff;border-color:var(--accent)':'')+'">'+label+'</button>'});
+h+='</div>';
+h+='<div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center"><span style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-weight:700">Банк:</span>';
+Object.keys(allBk).sort().forEach(function(b){var on=_sbMatBk[b];
+h+='<button class="btn-g" onclick="_sbMatToggleBk(\''+b.replace(/'/g,"\\'")+'\')" style="font-size:10px;padding:3px 8px;'+(on?'background:var(--green);color:#000;border-color:var(--green)':'')+'">'+b+'</button>'});
 h+='<button class="btn-g" onclick="_sbMatReset()" style="font-size:10px;padding:3px 8px;margin-left:4px">Сброс</button></div>';
 var bks=Object.keys(byBk).sort(function(a,c){return byBk[c].total-byBk[a].total});
 var grandTotal=0;bks.forEach(function(b){grandTotal+=byBk[b].total});
