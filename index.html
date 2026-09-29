@@ -955,7 +955,7 @@ var dates=Object.keys(byDate).sort(function(a,b){return parseD(b)-parseD(a)});
 var banks=Object.keys(byBank).sort();
 var h='<div class="kg">';h=_sbKpi(h,'Итого',tot);h+='</div>';
 h+='<div class="sc"><h3><span class="d"></span>Отработано по банкам</h3><div style="position:relative;height:320px"><canvas id="sbBankChart"></canvas></div></div>';
-h+='<div class="sc"><h3><span class="d"></span>% соотношение по дням</h3><div style="position:relative;height:360px"><canvas id="sbDailyPctChart"></canvas></div></div>';
+h+='<div class="sc"><h3><span class="d"></span>% соотношение по дням / банк</h3><div id="sbDailyGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div></div>';
 banks.forEach(function(b){
 h+='<div class="sc sc-col"><h3 onclick="this.parentElement.classList.toggle(\'sc-open\')"><span class="d"></span>'+b+' <span style="font-size:13px;font-weight:700;color:var(--text);margin-left:6px">'+byBank[b].total.total+'</span><span class="arr">&#9654;</span></h3>';
 h+='<div class="sb-bd"><div class="kg">';h=_sbKpi(h,b,byBank[b].total);h+='</div>';
@@ -971,20 +971,27 @@ h+='</tbody></table></div></div></div>';
 h+='<div class="sc"><h3><span class="d"></span>Остаток по материалу</h3><div id="sbMatBody"><div class="em">⏳ Загрузка...</div></div></div>';
 el.innerHTML=h;
 dc('sbBankChart');var bCtx=document.getElementById('sbBankChart');if(bCtx){var bLabels=banks,bOtr=banks.map(function(b){return byBank[b].total.otr}),bTot=banks.map(function(b){return byBank[b].total.total}),bBlk=banks.map(function(b){return byBank[b].total.blk+byBank[b].total.blkNoDen}),bDor=banks.map(function(b){return byBank[b].total.dor});ch['sbBankChart']=new Chart(bCtx,{type:'bar',data:{labels:bLabels,datasets:[{label:'Отработано',data:bOtr,backgroundColor:'rgba(74,222,128,.8)',borderRadius:4},{label:'Блок',data:bBlk,backgroundColor:'rgba(248,113,113,.8)',borderRadius:4},{label:'Доработки',data:bDor,backgroundColor:'rgba(232,86,109,.8)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#7c7f8a',font:{size:10},padding:10,boxWidth:12}},tooltip:{callbacks:{afterBody:function(ctx){var i=ctx[0].dataIndex;return'Всего: '+bTot[i]}}}},scales:{x:{ticks:{color:'#e2e4ea',font:{size:10},maxRotation:45},grid:{display:false}},y:{ticks:{color:'#7c7f8a',font:{size:10}},grid:{color:'rgba(47,50,65,.3)'}}}}})}
-dc('sbDailyPctChart');var dpCtx=document.getElementById('sbDailyPctChart');
-if(dpCtx){
+var dgEl=document.getElementById('sbDailyGrid');
+if(dgEl){
 var dLabels=dates.slice().reverse();
-var dOtr=dLabels.map(function(d){return byDate[d].otr});
-var dBlk=dLabels.map(function(d){return byDate[d].blk});
-var dBlkND=dLabels.map(function(d){return byDate[d].blkNoDen});
-var dDor=dLabels.map(function(d){return byDate[d].dor});
-var dTot=dLabels.map(function(d){return byDate[d].total});
-ch['sbDailyPctChart']=new Chart(dpCtx,{type:'bar',data:{labels:dLabels,datasets:[
-{label:'Отработано',data:dOtr,backgroundColor:'rgba(74,222,128,.8)',borderRadius:2},
-{label:'Блок',data:dBlk,backgroundColor:'rgba(248,113,113,.8)',borderRadius:2},
-{label:'Блок б/д',data:dBlkND,backgroundColor:'rgba(251,191,36,.8)',borderRadius:2},
-{label:'Доработки',data:dDor,backgroundColor:'rgba(232,86,109,.8)',borderRadius:2}
-]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#7c7f8a',font:{size:10},padding:10,boxWidth:12}},tooltip:{callbacks:{label:function(ctx){var t=dTot[ctx.dataIndex];var pct=t?Math.round(ctx.raw/t*100):0;return ctx.dataset.label+': '+ctx.raw+' ('+pct+'%)'},afterBody:function(ctx){return'Всего: '+dTot[ctx[0].dataIndex]}}}},scales:{x:{stacked:true,ticks:{color:'#e2e4ea',font:{size:9},maxRotation:45},grid:{display:false}},y:{stacked:true,ticks:{color:'#7c7f8a',font:{size:10}},grid:{color:'rgba(47,50,65,.3)'}}}}})}
+var gridH='';
+banks.forEach(function(b){gridH+='<div style="background:rgba(20,21,30,.6);border:1px solid var(--border);border-radius:10px;padding:10px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text2);letter-spacing:.5px;margin-bottom:6px">'+b+' <span style="color:var(--text);font-size:12px">'+byBank[b].total.total+'</span></div><div style="position:relative;height:180px"><canvas id="sbDG_'+b.replace(/\s/g,'_')+'"></canvas></div></div>'});
+dgEl.innerHTML=gridH;
+banks.forEach(function(b){
+var cid='sbDG_'+b.replace(/\s/g,'_');
+dc(cid);var cx=document.getElementById(cid);if(!cx)return;
+var bd=byBank[b].dates;
+var bOtr=dLabels.map(function(d){return bd[d]?bd[d].otr:0});
+var bBlk=dLabels.map(function(d){return bd[d]?bd[d].blk:0});
+var bBlkND=dLabels.map(function(d){return bd[d]?bd[d].blkNoDen:0});
+var bDor=dLabels.map(function(d){return bd[d]?bd[d].dor:0});
+var bTot=dLabels.map(function(d){return bd[d]?bd[d].total:0});
+ch[cid]=new Chart(cx,{type:'bar',data:{labels:dLabels,datasets:[
+{label:'Отработано',data:bOtr,backgroundColor:'rgba(74,222,128,.8)',borderRadius:1},
+{label:'Блок',data:bBlk,backgroundColor:'rgba(248,113,113,.8)',borderRadius:1},
+{label:'Блок б/д',data:bBlkND,backgroundColor:'rgba(251,191,36,.8)',borderRadius:1},
+{label:'Доработки',data:bDor,backgroundColor:'rgba(232,86,109,.8)',borderRadius:1}
+]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var t=bTot[ctx.dataIndex];var pct=t?Math.round(ctx.raw/t*100):0;return ctx.dataset.label+': '+ctx.raw+' ('+pct+'%)'},afterBody:function(ctx){return'Всего: '+bTot[ctx[0].dataIndex]}}}},scales:{x:{stacked:true,ticks:{color:'#e2e4ea',font:{size:8},maxRotation:45},grid:{display:false}},y:{stacked:true,ticks:{color:'#7c7f8a',font:{size:9}},grid:{color:'rgba(47,50,65,.2)'}}}}})})}
 _loadSbMaterial()}
 var _sbMatData=null,_sbMatSt={'готов':true,'доработка':true,'см2 доработка':true,'доработка см':true},_sbMatBk={};
 function _loadSbMaterial(){
