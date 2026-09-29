@@ -46,6 +46,7 @@
 .g{color:var(--green)}.r{color:var(--red)}.y{color:var(--yellow)}.bl{color:var(--blue)}.ac{color:var(--accent)}
 .sc{background:rgba(26,27,38,.88);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:14px}
 .sc h3{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}.sc h3 .d{width:4px;height:14px;background:linear-gradient(180deg,var(--accent),#A78BFA);border-radius:2px}
+.sc-col h3{cursor:pointer;user-select:none;margin-bottom:0}.sc-col h3 .arr{display:inline-block;transition:transform .2s;font-size:10px;margin-left:auto;color:var(--text2)}.sc-col:not(.sc-open) .sb-bd{display:none}.sc-col:not(.sc-open) h3{margin-bottom:0}.sc-col.sc-open h3{margin-bottom:12px}.sc-col.sc-open h3 .arr{transform:rotate(90deg)}
 .tw{overflow-x:auto}table.t{width:100%;border-collapse:collapse;font-size:12px}table.t th{padding:8px 10px;text-align:left;font-size:9px;text-transform:uppercase;color:var(--text2);font-weight:700;border-bottom:1px solid var(--border);white-space:nowrap}table.t td{padding:8px 10px;border-bottom:1px solid rgba(47,50,65,.5)}table.t tr:hover td{background:rgba(232,86,109,.03)}
 .fr{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}.fg{display:flex;flex-direction:column;gap:4px;flex:1;min-width:130px}.fg label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;font-weight:700}.fg input,.fg select{background:rgba(40,42,54,.9);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;outline:none;font-family:inherit}.fg input:focus,.fg select:focus{border-color:var(--accent)}
 .btn{border:none;border-radius:8px;padding:10px 22px;font-size:13px;font-weight:600;cursor:pointer}.btn-a{background:var(--accent);color:#fff}.btn-r{background:var(--red);color:#fff}.btn-g{background:transparent;border:1px solid var(--border);color:var(--text2);padding:6px 12px;font-size:11px;border-radius:6px;cursor:pointer}.pi{background:var(--bg3);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:12px;text-align:center;outline:none}.pi:focus{border-color:var(--accent)}
@@ -955,17 +956,17 @@ var banks=Object.keys(byBank).sort();
 var h='<div class="kg">';h=_sbKpi(h,'Итого',tot);h+='</div>';
 h+='<div class="sc"><h3><span class="d"></span>Отработано по банкам</h3><div style="position:relative;height:320px"><canvas id="sbBankChart"></canvas></div></div>';
 banks.forEach(function(b){
-h+='<div class="sc"><h3><span class="d"></span>'+b+'</h3>';
-h+='<div class="kg">';h=_sbKpi(h,b,byBank[b].total);h+='</div>';
+h+='<div class="sc sc-col"><h3 onclick="this.parentElement.classList.toggle(\'sc-open\')"><span class="d"></span>'+b+' <span style="font-size:13px;font-weight:700;color:var(--text);margin-left:6px">'+byBank[b].total.total+'</span><span class="arr">&#9654;</span></h3>';
+h+='<div class="sb-bd"><div class="kg">';h=_sbKpi(h,b,byBank[b].total);h+='</div>';
 var bd=Object.keys(byBank[b].dates).sort(function(a,c){return parseD(c)-parseD(a)});
 h+='<div class="tw"><table class="t"><thead><tr><th>Дата</th><th>Всего</th><th>Отработано</th><th>Блок б/д</th><th>Блок</th><th>Доработки</th></tr></thead><tbody>';
 bd.forEach(function(d){var g=byBank[b].dates[d];
 h+='<tr><td>'+d+'</td><td>'+g.total+'</td><td class="g">'+g.otr+'</td><td class="y">'+g.blkNoDen+'</td><td class="r">'+g.blk+'</td><td class="ac">'+g.dor+'</td></tr>'});
-h+='</tbody></table></div></div>'});
-h+='<div class="sc"><h3><span class="d"></span>Все банки — по дням</h3><div class="tw"><table class="t"><thead><tr><th>Дата</th><th>Всего</th><th>Отработано</th><th>Блок б/д</th><th>Блок</th><th>Доработки</th></tr></thead><tbody>';
+h+='</tbody></table></div></div></div>'});
+h+='<div class="sc sc-col"><h3 onclick="this.parentElement.classList.toggle(\'sc-open\')"><span class="d"></span>Все банки — по дням<span class="arr">&#9654;</span></h3><div class="sb-bd"><div class="tw"><table class="t"><thead><tr><th>Дата</th><th>Всего</th><th>Отработано</th><th>Блок б/д</th><th>Блок</th><th>Доработки</th></tr></thead><tbody>';
 dates.forEach(function(d){var g=byDate[d];
 h+='<tr><td>'+d+'</td><td>'+g.total+'</td><td class="g">'+g.otr+'</td><td class="y">'+g.blkNoDen+'</td><td class="r">'+g.blk+'</td><td class="ac">'+g.dor+'</td></tr>'});
-h+='</tbody></table></div></div>';
+h+='</tbody></table></div></div></div>';
 el.innerHTML=h;
 dc('sbBankChart');var bCtx=document.getElementById('sbBankChart');if(bCtx){var bLabels=banks,bOtr=banks.map(function(b){return byBank[b].total.otr}),bTot=banks.map(function(b){return byBank[b].total.total}),bBlk=banks.map(function(b){return byBank[b].total.blk+byBank[b].total.blkNoDen}),bDor=banks.map(function(b){return byBank[b].total.dor});ch['sbBankChart']=new Chart(bCtx,{type:'bar',data:{labels:bLabels,datasets:[{label:'Отработано',data:bOtr,backgroundColor:'rgba(74,222,128,.8)',borderRadius:4},{label:'Блок',data:bBlk,backgroundColor:'rgba(248,113,113,.8)',borderRadius:4},{label:'Доработки',data:bDor,backgroundColor:'rgba(232,86,109,.8)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#7c7f8a',font:{size:10},padding:10,boxWidth:12}},tooltip:{callbacks:{afterBody:function(ctx){var i=ctx[0].dataIndex;return'Всего: '+bTot[i]}}}},scales:{x:{ticks:{color:'#e2e4ea',font:{size:10},maxRotation:45},grid:{display:false}},y:{ticks:{color:'#7c7f8a',font:{size:10}},grid:{color:'rgba(47,50,65,.3)'}}}}})}}
 var _matCache=null,_matSel={},_matMeth={ACQ:true,P2P:true},_matBank={};
