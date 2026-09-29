@@ -976,7 +976,7 @@ function _loadSbMaterial(){
 var mb=document.getElementById('sbMatBody');if(!mb)return;
 if(_sbMatData){_renderSbMat();return}
 gasCall('getmaterial',{},function(data){_sbMatData=data;_renderSbMat()},function(e){mb.innerHTML='<div class="em" style="color:var(--red)">Ошибка: '+e.message+'</div>'},120)}
-function _sbMatToggle(s){_sbMatSt[s]=_sbMatSt[s]?false:true;_renderSbMat()}
+function _sbMatToggle(s){var k=s.toLowerCase();_sbMatSt[k]=_sbMatSt[k]?false:true;_renderSbMat()}
 function _sbMatAdd(s){_sbMatSt[s]=true;_renderSbMat()}
 function _sbMatReset(){_sbMatSt={'готов':true,'доработка':true,'см2 доработка':true,'доработка см':true};_renderSbMat()}
 function _renderSbMat(){
