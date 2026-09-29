@@ -970,7 +970,8 @@ h+='<tr><td>'+d+'</td><td>'+g.total+'</td><td class="g">'+g.otr+'</td><td class=
 h+='</tbody></table></div></div></div>';
 h+='<div class="sc"><h3><span class="d"></span>Остаток по материалу</h3><div id="sbMatBody"><div class="em">⏳ Загрузка...</div></div></div>';
 el.innerHTML=h;
-dc('sbBankChart');var bCtx=document.getElementById('sbBankChart');if(bCtx){var bLabels=banks,bOtr=banks.map(function(b){return byBank[b].total.otr}),bTot=banks.map(function(b){return byBank[b].total.total}),bBlk=banks.map(function(b){return byBank[b].total.blk+byBank[b].total.blkNoDen}),bDor=banks.map(function(b){return byBank[b].total.dor});ch['sbBankChart']=new Chart(bCtx,{type:'bar',data:{labels:bLabels,datasets:[{label:'Отработано',data:bOtr,backgroundColor:'rgba(74,222,128,.8)',borderRadius:4},{label:'Блок',data:bBlk,backgroundColor:'rgba(248,113,113,.8)',borderRadius:4},{label:'Доработки',data:bDor,backgroundColor:'rgba(232,86,109,.8)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#7c7f8a',font:{size:10},padding:10,boxWidth:12}},tooltip:{callbacks:{afterBody:function(ctx){var i=ctx[0].dataIndex;return'Всего: '+bTot[i]}}}},scales:{x:{ticks:{color:'#e2e4ea',font:{size:10},maxRotation:45},grid:{display:false}},y:{ticks:{color:'#7c7f8a',font:{size:10}},grid:{color:'rgba(47,50,65,.3)'}}}}})}
+var _nOtr='rgba(0,255,136,.85)',_nBlk='rgba(255,60,100,.85)',_nBlkND='rgba(255,170,0,.85)',_nDor='rgba(190,50,255,.85)';
+dc('sbBankChart');var bCtx=document.getElementById('sbBankChart');if(bCtx){var bLabels=banks,bOtr=banks.map(function(b){return byBank[b].total.otr}),bTot=banks.map(function(b){return byBank[b].total.total}),bBlk=banks.map(function(b){return byBank[b].total.blk+byBank[b].total.blkNoDen}),bDor=banks.map(function(b){return byBank[b].total.dor});ch['sbBankChart']=new Chart(bCtx,{type:'bar',data:{labels:bLabels,datasets:[{label:'Отработано',data:bOtr,backgroundColor:_nOtr,borderColor:'rgba(0,255,136,.4)',borderWidth:1,borderRadius:4},{label:'Блок',data:bBlk,backgroundColor:_nBlk,borderColor:'rgba(255,60,100,.4)',borderWidth:1,borderRadius:4},{label:'Доработки',data:bDor,backgroundColor:_nDor,borderColor:'rgba(190,50,255,.4)',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#aab',font:{size:10},padding:10,boxWidth:12}},tooltip:{mode:'index',intersect:false,callbacks:{afterBody:function(ctx){var i=ctx[0].dataIndex;return'Всего: '+bTot[i]}}}},scales:{x:{ticks:{color:'#e2e4ea',font:{size:10},maxRotation:45},grid:{display:false}},y:{ticks:{color:'#7c7f8a',font:{size:10}},grid:{color:'rgba(47,50,65,.3)'}}}}})}
 var dgEl=document.getElementById('sbDailyGrid');
 if(dgEl){
 var dLabels=dates.slice().reverse();
@@ -987,11 +988,11 @@ var bBlkND=dLabels.map(function(d){return bd[d]?bd[d].blkNoDen:0});
 var bDor=dLabels.map(function(d){return bd[d]?bd[d].dor:0});
 var bTot=dLabels.map(function(d){return bd[d]?bd[d].total:0});
 ch[cid]=new Chart(cx,{type:'bar',data:{labels:dLabels,datasets:[
-{label:'Отработано',data:bOtr,backgroundColor:'rgba(74,222,128,.8)',borderRadius:1},
-{label:'Блок',data:bBlk,backgroundColor:'rgba(248,113,113,.8)',borderRadius:1},
-{label:'Блок б/д',data:bBlkND,backgroundColor:'rgba(251,191,36,.8)',borderRadius:1},
-{label:'Доработки',data:bDor,backgroundColor:'rgba(232,86,109,.8)',borderRadius:1}
-]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){var t=bTot[ctx.dataIndex];var pct=t?Math.round(ctx.raw/t*100):0;return ctx.dataset.label+': '+ctx.raw+' ('+pct+'%)'},afterBody:function(ctx){return'Всего: '+bTot[ctx[0].dataIndex]}}}},scales:{x:{stacked:true,ticks:{color:'#e2e4ea',font:{size:8},maxRotation:45},grid:{display:false}},y:{stacked:true,ticks:{color:'#7c7f8a',font:{size:9}},grid:{color:'rgba(47,50,65,.2)'}}}}})})}
+{label:'Отработано',data:bOtr,backgroundColor:_nOtr,borderColor:'rgba(0,255,136,.3)',borderWidth:1,borderRadius:1},
+{label:'Блок',data:bBlk,backgroundColor:_nBlk,borderColor:'rgba(255,60,100,.3)',borderWidth:1,borderRadius:1},
+{label:'Блок б/д',data:bBlkND,backgroundColor:_nBlkND,borderColor:'rgba(255,170,0,.3)',borderWidth:1,borderRadius:1},
+{label:'Доработки',data:bDor,backgroundColor:_nDor,borderColor:'rgba(190,50,255,.3)',borderWidth:1,borderRadius:1}
+]},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,callbacks:{label:function(ctx){var t=bTot[ctx.dataIndex];var pct=t?Math.round(ctx.raw/t*100):0;return ctx.dataset.label+': '+ctx.raw+' ('+pct+'%)'},afterBody:function(ctx){return'Всего: '+bTot[ctx[0].dataIndex]}}}},scales:{x:{stacked:true,ticks:{color:'#e2e4ea',font:{size:8},maxRotation:45},grid:{display:false}},y:{stacked:true,ticks:{color:'#7c7f8a',font:{size:9}},grid:{color:'rgba(47,50,65,.2)'}}}}})})}
 _loadSbMaterial()}
 var _sbMatData=null,_sbMatSt={'готов':true,'доработка':true,'см2 доработка':true,'доработка см':true},_sbMatBk={};
 function _loadSbMaterial(){
