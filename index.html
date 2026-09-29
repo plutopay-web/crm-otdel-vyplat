@@ -1041,14 +1041,6 @@ var grandTotal=0;bks.forEach(function(b){grandTotal+=byBk[b].total});
 h+='<div class="kg" style="margin-bottom:12px"><div class="kc"><div class="kl">Всего остаток</div><div class="kv bl">'+grandTotal+'</div></div>';
 bks.forEach(function(b){h+='<div class="kc"><div class="kl">'+b+'</div><div class="kv bl">'+byBk[b].total+'</div></div>'});
 h+='</div>';
-bks.forEach(function(b){
-var sts=byBk[b].states,sks=Object.keys(sts).sort(function(a,c){return sts[c]-sts[a]});
-h+='<div class="sc sc-col" style="margin-bottom:6px"><h3 onclick="this.parentElement.classList.toggle(\'sc-open\')" style="font-size:10px"><span class="d"></span>'+b+' <span style="font-size:12px;font-weight:700;color:var(--text);margin-left:4px">'+byBk[b].total+'</span><span class="arr">&#9654;</span></h3>';
-h+='<div class="sb-bd">';
-sks.forEach(function(s){
-var cls=(/готов/i.test(s))?'g':(/доработ/i.test(s))?'y':'';
-h+='<div style="display:flex;justify-content:space-between;padding:4px 8px;border-bottom:1px solid var(--border);font-size:12px"><span>'+s+'</span><span class="'+(cls||'bl')+'" style="font-weight:700">'+sts[s]+'</span></div>'});
-h+='</div></div>'});
 mb.innerHTML=h}
 var _matCache=null,_matSel={},_matMeth={},_matBank={};
 function rMaterial(el,tabs){
