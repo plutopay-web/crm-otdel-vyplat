@@ -222,6 +222,7 @@ gasCall('whoami',{},function(d){
 
 function initApp(){
   var nav=document.getElementById('nav'),h='',sa=['leaderboard','bonuses','payroll'];
+  if(!C.sections.some(function(s){return s.id==='tables'}))C.sections.splice(C.sections.length-1,0,{id:'tables',label:'Таблицы',icon:'📑'});
   C.sections.forEach(function(s){
     if(s.id==='admin')h+='<div style="font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:1.2px;padding:6px 16px 4px;font-weight:700;opacity:.6">Управление</div>';
     if(s.id==='analytics'){
